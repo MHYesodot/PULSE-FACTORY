@@ -1,0 +1,5 @@
+{
+  "name": "PulseFactory.Editor",
+  "references": ["PulseFactory.Core", "PulseFactory.Runtime"],
+  "includePlatforms": ["Editor"]
+}

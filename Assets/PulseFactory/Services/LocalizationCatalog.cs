@@ -49,6 +49,13 @@ namespace PulseFactory.Localization
             }
         }
 
+        public void ValidateRequiredKeys(params string[] keys)
+        {
+            foreach (var key in keys)
+                if (!entries.ContainsKey(key))
+                    throw new SerializationException("Missing required translation: " + key);
+        }
+
         public string Text(string key, params object[] arguments)
         {
             if (!entries.TryGetValue(key, out var value)) throw new KeyNotFoundException("Missing translation: " + key);

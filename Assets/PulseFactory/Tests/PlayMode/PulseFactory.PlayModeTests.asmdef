@@ -1,5 +1,5 @@
 {
   "name": "PulseFactory.PlayModeTests",
-  "references": ["PulseFactory.Core", "PulseFactory.Runtime"],
+  "references": ["PulseFactory.Core", "PulseFactory.Runtime", "PulseFactory.Services"],
   "optionalUnityReferences": ["TestAssemblies"]
 }

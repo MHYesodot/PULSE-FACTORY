@@ -30,20 +30,33 @@ namespace PulseFactory.UI
         public GameSession Session { get; private set; }
         public bool IsAnimating => board != null && board.IsAnimating(Time.unscaledTime);
         public bool ReducedMotion => save != null && save.ReducedMotion;
+#if UNITY_EDITOR
+        internal static string TestSavePath { get; set; }
+#endif
 
         private void Awake()
         {
             try
             {
                 english = new LocalizationCatalog(Resource("Localization/en"));
+                english.ValidateRequiredKeys("loadError");
                 text = english;
                 hebrew = new LocalizationCatalog(Resource("Localization/he"));
                 english.ValidateKeys(hebrew);
+                english.ValidateRequiredKeys("title", "tutorial", "move", "pulseA", "pulseB", "undo", "restart",
+                    "language", "motionOn", "motionOff", "beat", "switches", "progress", "best", "playing",
+                    "animating", "victory", "failureCollision", "failureWrongDestination", "failureDestinationFull",
+                    "failureBeatLimit", "hint", "schedule", "legend", "source", "diverter", "red", "blue",
+                    "redSymbol", "blueSymbol", "destinationCount", "saveWarning", "fontWarning");
                 font = Font.CreateDynamicFontFromOSFont(new[] { "Arial", "Arial Hebrew", "Noto Sans Hebrew", "DejaVu Sans" }, 22);
                 hebrewFontAvailable = font != null && Enumerable.Range(0x05D0, 27).All(c => font.HasCharacter((char)c));
                 // Batch-mode tests never touch the player's real progression.
                 string filename = Application.isBatchMode ? "progress-batch.json" : "progress.json";
-                store = new SaveStore(Path.Combine(Application.persistentDataPath, filename), Debug.LogWarning);
+                string savePath = Path.Combine(Application.persistentDataPath, filename);
+#if UNITY_EDITOR
+                savePath = TestSavePath ?? savePath;
+#endif
+                store = new SaveStore(savePath, Debug.LogWarning);
                 save = store.Load();
                 if (store.HadLoadError) warningKey = "saveWarning";
                 if (save.Locale == "he")
@@ -135,13 +148,12 @@ namespace PulseFactory.UI
                 title = new GUIStyle(label) { fontSize = 30, fontStyle = FontStyle.Bold };
                 button = new GUIStyle(GUI.skin.button) { font = font, fontSize = 20, wordWrap = true };
             }
-            var safe = Screen.safeArea;
-            float scale = Mathf.Min(safe.width / 480f, safe.height / 900f);
+            var viewport = FitPortraitViewport(Screen.safeArea, Screen.height);
+            float scale = viewport.width / 480f;
             if (scale <= 0) return;
             var previousMatrix = GUI.matrix;
             bool previousEnabled = GUI.enabled;
-            var origin = new Vector3(safe.x + (safe.width - 480 * scale) / 2,
-                Screen.height - safe.yMax + (safe.height - 900 * scale) / 2, 0);
+            var origin = new Vector3(viewport.x, viewport.y, 0);
             GUI.matrix = Matrix4x4.TRS(origin, Quaternion.identity, new Vector3(scale, scale, 1));
             BoardRenderer.Fill(new Rect(0, 0, 480, 900), new Color(0.035f, 0.055f, 0.10f));
             GUI.Label(new Rect(15, 8, 450, 45), text.Display("title"), title);
@@ -150,6 +162,14 @@ namespace PulseFactory.UI
             else DrawGame();
             GUI.enabled = previousEnabled;
             GUI.matrix = previousMatrix;
+        }
+
+        internal static Rect FitPortraitViewport(Rect safe, float screenHeight)
+        {
+            float scale = Mathf.Min(safe.width / 480f, safe.height / 900f);
+            var size = new Vector2(480 * scale, 900 * scale);
+            return new Rect(safe.x + (safe.width - size.x) / 2,
+                screenHeight - safe.yMax + (safe.height - size.y) / 2, size.x, size.y);
         }
 
         private void DrawGame()

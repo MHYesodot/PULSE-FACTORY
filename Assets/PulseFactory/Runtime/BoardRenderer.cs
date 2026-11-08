@@ -4,6 +4,7 @@ using System.Linq;
 using PulseFactory.Core;
 using PulseFactory.Localization;
 using UnityEngine;
+using EventType = PulseFactory.Core.EventType;
 
 namespace PulseFactory.Presentation
 {
@@ -114,9 +115,16 @@ namespace PulseFactory.Presentation
         private static void Line(Vector2 start, Vector2 end, float thickness, Color color)
         {
             Matrix4x4 previous = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg, start);
-            Fill(new Rect(start.x, start.y - thickness / 2, Vector2.Distance(start, end), thickness), color);
+            GUI.matrix = LineMatrix(previous, start, end);
+            Fill(new Rect(0, -thickness / 2, Vector2.Distance(start, end), thickness), color);
             GUI.matrix = previous;
+        }
+
+        internal static Matrix4x4 LineMatrix(Matrix4x4 parent, Vector2 start, Vector2 end)
+        {
+            float angle = Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg;
+            // Rotate in board-local space before applying the portrait viewport transform.
+            return parent * Matrix4x4.TRS(start, Quaternion.Euler(0, 0, angle), Vector3.one);
         }
     }
 }

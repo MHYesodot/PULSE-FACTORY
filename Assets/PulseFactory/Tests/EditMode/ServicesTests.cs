@@ -139,5 +139,14 @@ namespace PulseFactory.Tests
             var broken = new LocalizationCatalog(TestResources.Read("Localization/he.json").Replace("\"key\": \"move\"", "\"key\": \"other\""));
             Assert.Throws<SerializationException>(() => en.ValidateKeys(broken));
         }
+
+        [Test]
+        public void RequiredKeyMissingFromBothLocalesIsRejectedBeforeRendering()
+        {
+            var en = new LocalizationCatalog(TestResources.Read("Localization/en.json").Replace("\"key\": \"move\"", "\"key\": \"other\""));
+            var he = new LocalizationCatalog(TestResources.Read("Localization/he.json").Replace("\"key\": \"move\"", "\"key\": \"other\""));
+            Assert.DoesNotThrow(() => en.ValidateKeys(he));
+            Assert.Throws<SerializationException>(() => en.ValidateRequiredKeys("move", "loadError"));
+        }
     }
 }
