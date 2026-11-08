@@ -1,0 +1,5 @@
+{
+  "name": "PulseFactory.Core",
+  "rootNamespace": "PulseFactory",
+  "noEngineReferences": true
+}

@@ -1,0 +1,23 @@
+{
+  "id": "tutorial",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "S", "type": "Source", "x": 0.5, "y": 0.05 },
+    { "id": "J", "type": "Diverter", "x": 0.5, "y": 0.45, "group": "A", "falseEdge": "JR", "trueEdge": "JB" },
+    { "id": "R", "type": "Destination", "x": 0.12, "y": 0.90, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.88, "y": 0.90, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SJ", "from": "S", "to": "J" },
+    { "id": "JR", "from": "J", "to": "R" },
+    { "id": "JB", "from": "J", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "S", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "S", "beat": 3 }
+  ],
+  "maxBeats": 6,
+  "threeStarBeats": 4,
+  "twoStarBeats": 5
+}

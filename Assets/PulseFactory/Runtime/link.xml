@@ -1,0 +1,4 @@
+<linker>
+  <assembly fullname="PulseFactory.Core" preserve="all" />
+  <assembly fullname="PulseFactory.Services" preserve="all" />
+</linker>

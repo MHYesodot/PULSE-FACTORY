@@ -1,0 +1,6 @@
+{
+  "name": "PulseFactory.EditModeTests",
+  "references": ["PulseFactory.Core", "PulseFactory.Services"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

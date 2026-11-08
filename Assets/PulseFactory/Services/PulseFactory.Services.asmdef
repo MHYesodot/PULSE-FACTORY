@@ -1,0 +1,5 @@
+{
+  "name": "PulseFactory.Services",
+  "rootNamespace": "PulseFactory",
+  "noEngineReferences": true
+}
