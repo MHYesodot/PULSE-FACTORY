@@ -1,0 +1,38 @@
+{
+  "id": "chain-reaction",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "SR1", "type": "Source", "x": 0.2, "y": 0.05 },
+    { "id": "SR2", "type": "Source", "x": 0.5, "y": 0.05 },
+    { "id": "CR2", "type": "Conveyor", "x": 0.5, "y": 0.35 },
+    { "id": "SB", "type": "Source", "x": 0.8, "y": 0.05 },
+    { "id": "CB", "type": "Conveyor", "x": 0.8, "y": 0.35 },
+    { "id": "JR1", "type": "Diverter", "x": 0.2, "y": 0.65, "group": "A", "falseEdge": "J1B", "trueEdge": "J1R" },
+    { "id": "JR2", "type": "Diverter", "x": 0.5, "y": 0.65, "group": "A", "falseEdge": "J2B", "trueEdge": "J2R" },
+    { "id": "JB", "type": "Diverter", "x": 0.8, "y": 0.65, "group": "A", "inverted": true, "falseEdge": "JBB", "trueEdge": "JBR" },
+    { "id": "R", "type": "Destination", "x": 0.35, "y": 0.95, "accepts": "red", "requiredCount": 2 },
+    { "id": "B", "type": "Destination", "x": 0.8, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SR1J", "from": "SR1", "to": "JR1" },
+    { "id": "SR2C", "from": "SR2", "to": "CR2" },
+    { "id": "CR2J", "from": "CR2", "to": "JR2" },
+    { "id": "SBBC", "from": "SB", "to": "CB" },
+    { "id": "CBJB", "from": "CB", "to": "JB" },
+    { "id": "J1R", "from": "JR1", "to": "R" },
+    { "id": "J1B", "from": "JR1", "to": "B" },
+    { "id": "J2R", "from": "JR2", "to": "R" },
+    { "id": "J2B", "from": "JR2", "to": "B" },
+    { "id": "JBR", "from": "JB", "to": "R" },
+    { "id": "JBB", "from": "JB", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "SR1", "beat": 1 },
+    { "id": "red-2", "kind": "red", "source": "SR2", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "SB", "beat": 1 }
+  ],
+  "maxBeats": 5,
+  "threeStarBeats": 3,
+  "twoStarBeats": 4
+}

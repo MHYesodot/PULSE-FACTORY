@@ -1,0 +1,30 @@
+{
+  "id": "second-circuit",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "SR", "type": "Source", "x": 0.25, "y": 0.05 },
+    { "id": "JA", "type": "Diverter", "x": 0.25, "y": 0.5, "group": "A", "falseEdge": "JAB", "trueEdge": "JAR" },
+    { "id": "SB", "type": "Source", "x": 0.75, "y": 0.05 },
+    { "id": "CB", "type": "Conveyor", "x": 0.75, "y": 0.3 },
+    { "id": "JB", "type": "Diverter", "x": 0.75, "y": 0.65, "group": "B", "falseEdge": "JBR", "trueEdge": "JBB" },
+    { "id": "R", "type": "Destination", "x": 0.25, "y": 0.95, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.75, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SRJA", "from": "SR", "to": "JA" },
+    { "id": "JAR", "from": "JA", "to": "R" },
+    { "id": "JAB", "from": "JA", "to": "B" },
+    { "id": "SBCB", "from": "SB", "to": "CB" },
+    { "id": "CBJB", "from": "CB", "to": "JB" },
+    { "id": "JBR", "from": "JB", "to": "R" },
+    { "id": "JBB", "from": "JB", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "SR", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "SB", "beat": 1 }
+  ],
+  "maxBeats": 5,
+  "threeStarBeats": 3,
+  "twoStarBeats": 4
+}

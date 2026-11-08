@@ -1,5 +1,5 @@
 {
   "name": "PulseFactory.Editor",
-  "references": ["PulseFactory.Core", "PulseFactory.Runtime"],
+  "references": ["PulseFactory.Core", "PulseFactory.Runtime", "Unity.TextMeshPro"],
   "includePlatforms": ["Editor"]
 }

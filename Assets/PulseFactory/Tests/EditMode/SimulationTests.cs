@@ -330,5 +330,69 @@ namespace PulseFactory.Tests
                 Assert.That(Events(a), Is.EqualTo(Events(b)));
             }
         }
+
+        [Test]
+        public void EightCuratedLevelsHaveValidatedShortestIntendedSolutions()
+        {
+            var catalog = LevelCatalog.Parse(TestResources.Read("Levels/catalog.json"));
+            Assert.That(catalog.Levels.Count, Is.EqualTo(8));
+            for (int i = 0; i < catalog.Levels.Count; i++)
+            {
+                var entry = catalog.Levels[i];
+                Assert.That(entry.Number, Is.EqualTo(i + 1));
+                var level = LevelJson.Parse(TestResources.Read(entry.Resource + ".json"));
+                Assert.That(level.Id, Is.EqualTo(entry.LevelId));
+                Assert.That(level.MaxBeats, Is.GreaterThanOrEqualTo(entry.IntendedSolution.Count));
+
+                var search = LevelSolver.Solve(level);
+                Assert.That(search.LimitReached, Is.False, entry.LevelId + " hit the search bound.");
+                Assert.That(search.Solved, Is.True, entry.LevelId + " has no winning command sequence.");
+                Assert.That(search.Commands.Count, Is.EqualTo(entry.IntendedSolution.Count),
+                    entry.LevelId + " intended path is not a shortest solution.");
+
+                var session = new GameSession(level);
+                foreach (var command in entry.IntendedSolution)
+                {
+                    Assert.That(session.Engine.IsAvailable(session.State, command), Is.True,
+                        entry.LevelId + " contains an unavailable command.");
+                    session.Execute(command);
+                    Assert.That(session.State.Result.Status, Is.Not.EqualTo(LevelStatus.Failed),
+                        entry.LevelId + " failed while replaying its documented solution.");
+                }
+                Assert.That(session.State.Result.Status, Is.EqualTo(LevelStatus.Victory), entry.LevelId);
+            }
+        }
+
+        [Test]
+        public void SharedControlSolutionPulsesBothDivertersBeforeTheirSimultaneousDelivery()
+        {
+            var catalog = LevelCatalog.Parse(TestResources.Read("Levels/catalog.json"));
+            var entry = catalog.Levels.Single(level => level.LevelId == "shared-control");
+            var level = LevelJson.Parse(TestResources.Read(entry.Resource + ".json"));
+            var session = new GameSession(level);
+            session.Execute(SimulationCommand.PulseA);
+            Assert.That(session.State.Switches.A, Is.True);
+            Assert.That(session.Engine.Route(level.Nodes.Single(node => node.Id == "J1"), session.State.Switches), Is.EqualTo("R"));
+            Assert.That(session.Engine.Route(level.Nodes.Single(node => node.Id == "J2"), session.State.Switches), Is.EqualTo("B"));
+            var result = session.Execute(entry.IntendedSolution[1]);
+            Assert.That(result.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
+            Assert.That(result.Events.Count(item => item.Type == EventType.Delivered), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void BoundedSolverReportsLimitAndCanonicalKeysPreserveDistinctStates()
+        {
+            var level = TestResources.Tutorial();
+            var result = LevelSolver.Solve(level, 1);
+            Assert.That(result.Solved, Is.False);
+            Assert.That(result.LimitReached, Is.True);
+            Assert.That(result.ExpandedStates, Is.EqualTo(1));
+
+            var engine = new SimulationEngine(level);
+            var initial = engine.InitialState();
+            var moved = engine.Step(initial, SimulationCommand.Move).State;
+            Assert.That(LevelSolver.CanonicalKey(initial), Is.Not.EqualTo(LevelSolver.CanonicalKey(moved)));
+            Assert.That(LevelSolver.CanonicalKey(initial), Is.EqualTo(LevelSolver.CanonicalKey(engine.InitialState())));
+        }
     }
 }

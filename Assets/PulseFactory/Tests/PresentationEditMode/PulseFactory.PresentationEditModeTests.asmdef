@@ -1,0 +1,6 @@
+{
+  "name": "PulseFactory.PresentationEditModeTests",
+  "references": ["Unity.TextMeshPro"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

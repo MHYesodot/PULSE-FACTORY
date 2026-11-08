@@ -117,19 +117,20 @@ namespace PulseFactory.Tests
         }
 
         [Test]
-        public void HebrewVisualOrderPreservesNumbersAndLatinTokens()
+        public void HebrewLocalizationPreservesLogicalTextForTextMeshProsRtlLayout()
         {
-            Assert.That(LocalizationCatalog.HebrewVisualOrder("פעימה 12"), Is.EqualTo("12 המיעפ"));
-            Assert.That(LocalizationCatalog.HebrewVisualOrder("פעימה PULSE"), Is.EqualTo("PULSE המיעפ"));
-            Assert.That(LocalizationCatalog.HebrewVisualOrder("אב\nגד"), Is.EqualTo("בא\nדג"));
+            var he = new LocalizationCatalog(TestResources.Read("Localization/he.json"));
+            Assert.That(he.Display("beat", 4, 6), Is.EqualTo("פעימה 4 / 6"));
+            Assert.That(he.Display("switches", 1, 0), Is.EqualTo("א: 1     ב: 0"));
+            Assert.That(he.RightToLeft, Is.True);
         }
 
         [Test]
-        public void HebrewWrapsLogicalLinesBeforeVisualOrdering()
+        public void HebrewWrapPreservesLogicalTextAndLineOrder()
         {
             var he = new LocalizationCatalog(TestResources.Read("Localization/he.json"));
             Assert.That(he.DisplayWrapped("tutorial", line => line.Length <= 10),
-                Is.EqualTo(":הכרדה\nםודא בותינ\nלוחכו"));
+                Is.EqualTo("הדרכה:\nניתוב אדום\nוכחול"));
         }
 
         [Test]
@@ -147,6 +148,68 @@ namespace PulseFactory.Tests
             var he = new LocalizationCatalog(TestResources.Read("Localization/he.json").Replace("\"key\": \"move\"", "\"key\": \"other\""));
             Assert.DoesNotThrow(() => en.ValidateKeys(he));
             Assert.Throws<SerializationException>(() => en.ValidateRequiredKeys("move", "loadError"));
+        }
+
+        [Test]
+        public void LevelCatalogLocalizationKeysAndInstructionPlaceholdersAreSynchronized()
+        {
+            var catalog = PulseFactory.Core.LevelCatalog.Parse(TestResources.Read("Levels/catalog.json"));
+            var en = new LocalizationCatalog(TestResources.Read("Localization/en.json"));
+            var he = new LocalizationCatalog(TestResources.Read("Localization/he.json"));
+            en.ValidateKeys(he);
+            foreach (var level in catalog.Levels)
+            {
+                Assert.DoesNotThrow(() => en.ValidateRequiredKeys(level.TitleKey, level.InstructionKey));
+                Assert.That(en.Text(level.TitleKey), Is.Not.Empty);
+                Assert.That(he.Text(level.TitleKey), Is.Not.Empty);
+                Assert.That(en.Text(level.InstructionKey), Is.Not.Empty);
+                Assert.That(he.Text(level.InstructionKey), Is.Not.Empty);
+            }
+        }
+
+        [Test]
+        public void AnonymousPlaytestCountersPersistAndExportWithoutAnIdentifier()
+        {
+            var statsPath = Path.Combine(directory, "stats.json");
+            var stats = new PlaytestStatsStore(statsPath, warnings.Add);
+            stats.RecordStart("tutorial");
+            stats.RecordCommand("tutorial", false);
+            stats.RecordCommand("tutorial", true);
+            stats.RecordUndo("tutorial");
+            stats.RecordRestart("tutorial");
+            stats.RecordCompletion("tutorial", 12.5);
+            var loaded = new PlaytestStatsStore(statsPath, warnings.Add).Data;
+            var level = loaded.Levels.Single();
+            Assert.That(loaded.SchemaVersion, Is.EqualTo(1));
+            Assert.That(level.LevelId, Is.EqualTo("tutorial"));
+            Assert.That(level.Starts, Is.EqualTo(1));
+            Assert.That(level.Completions, Is.EqualTo(1));
+            Assert.That(level.Commands, Is.EqualTo(2));
+            Assert.That(level.FailedAttempts, Is.EqualTo(1));
+            Assert.That(level.UndoUses, Is.EqualTo(1));
+            Assert.That(level.Restarts, Is.EqualTo(1));
+            Assert.That(level.TotalCompletionSeconds, Is.EqualTo(12.5));
+            string exportDirectory = Path.Combine(directory, "exports");
+            string exportPath = stats.Export(exportDirectory);
+            Assert.That(File.Exists(exportPath), Is.True);
+            string json = File.ReadAllText(exportPath);
+            Assert.That(json, Does.Contain("FailedAttempts"));
+            Assert.That(json.ToLowerInvariant(), Does.Not.Contain("sessionid"));
+            Assert.That(warnings, Is.Empty);
+        }
+
+        [Test]
+        public void CorruptPlaytestStatisticsAreReportedAndFreshDataIsUsed()
+        {
+            Directory.CreateDirectory(directory);
+            string statsPath = Path.Combine(directory, "stats.json");
+            File.WriteAllText(statsPath, "broken stats");
+            var stats = new PlaytestStatsStore(statsPath, warnings.Add);
+            Assert.That(stats.Data.Levels, Is.Empty);
+            Assert.That(warnings.Count, Is.EqualTo(1));
+            Assert.That(File.ReadAllText(statsPath), Is.EqualTo("broken stats"));
+            stats.RecordStart("tutorial");
+            Assert.That(File.ReadAllText(statsPath + ".bak"), Is.EqualTo("broken stats"));
         }
     }
 }

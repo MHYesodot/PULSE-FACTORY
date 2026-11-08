@@ -1,0 +1,35 @@
+{
+  "id": "synchronized-network",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "SR", "type": "Source", "x": 0.2, "y": 0.05 },
+    { "id": "JA", "type": "Diverter", "x": 0.2, "y": 0.3, "group": "A", "falseEdge": "JAB", "trueEdge": "JAC" },
+    { "id": "CR", "type": "Conveyor", "x": 0.2, "y": 0.53 },
+    { "id": "JR", "type": "Diverter", "x": 0.2, "y": 0.75, "group": "B", "falseEdge": "JRR", "trueEdge": "JRB" },
+    { "id": "SB", "type": "Source", "x": 0.8, "y": 0.05 },
+    { "id": "CB", "type": "Conveyor", "x": 0.8, "y": 0.3 },
+    { "id": "JB", "type": "Diverter", "x": 0.8, "y": 0.53, "group": "B", "falseEdge": "JBR", "trueEdge": "JBB" },
+    { "id": "R", "type": "Destination", "x": 0.2, "y": 0.95, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.8, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SRJA", "from": "SR", "to": "JA" },
+    { "id": "JAC", "from": "JA", "to": "CR" },
+    { "id": "JAB", "from": "JA", "to": "B" },
+    { "id": "CRJR", "from": "CR", "to": "JR" },
+    { "id": "JRR", "from": "JR", "to": "R" },
+    { "id": "JRB", "from": "JR", "to": "B" },
+    { "id": "SBCB", "from": "SB", "to": "CB" },
+    { "id": "CBJB", "from": "CB", "to": "JB" },
+    { "id": "JBR", "from": "JB", "to": "R" },
+    { "id": "JBB", "from": "JB", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "SR", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "SB", "beat": 1 }
+  ],
+  "maxBeats": 6,
+  "threeStarBeats": 4,
+  "twoStarBeats": 5
+}

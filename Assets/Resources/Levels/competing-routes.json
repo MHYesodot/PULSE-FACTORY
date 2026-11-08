@@ -1,0 +1,30 @@
+{
+  "id": "competing-routes",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "S1", "type": "Source", "x": 0.2, "y": 0.05 },
+    { "id": "C1", "type": "Conveyor", "x": 0.2, "y": 0.35 },
+    { "id": "S2", "type": "Source", "x": 0.8, "y": 0.05 },
+    { "id": "J1", "type": "Diverter", "x": 0.2, "y": 0.65, "group": "A", "falseEdge": "J1R", "trueEdge": "J1B" },
+    { "id": "J2", "type": "Diverter", "x": 0.8, "y": 0.65, "group": "A", "falseEdge": "J2R", "trueEdge": "J2B" },
+    { "id": "R", "type": "Destination", "x": 0.2, "y": 0.95, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.8, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "S1C1", "from": "S1", "to": "C1" },
+    { "id": "C1J1", "from": "C1", "to": "J1" },
+    { "id": "S2J2", "from": "S2", "to": "J2" },
+    { "id": "J1R", "from": "J1", "to": "R" },
+    { "id": "J1B", "from": "J1", "to": "B" },
+    { "id": "J2R", "from": "J2", "to": "R" },
+    { "id": "J2B", "from": "J2", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "S1", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "S2", "beat": 1 }
+  ],
+  "maxBeats": 5,
+  "threeStarBeats": 3,
+  "twoStarBeats": 4
+}

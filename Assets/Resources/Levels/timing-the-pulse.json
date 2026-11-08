@@ -1,0 +1,32 @@
+{
+  "id": "timing-the-pulse",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "SR", "type": "Source", "x": 0.25, "y": 0.05 },
+    { "id": "C1", "type": "Conveyor", "x": 0.25, "y": 0.27 },
+    { "id": "C2", "type": "Conveyor", "x": 0.25, "y": 0.49 },
+    { "id": "JR", "type": "Diverter", "x": 0.25, "y": 0.71, "group": "A", "falseEdge": "JRR", "trueEdge": "JRB" },
+    { "id": "SB", "type": "Source", "x": 0.75, "y": 0.05 },
+    { "id": "JB", "type": "Diverter", "x": 0.75, "y": 0.49, "group": "A", "inverted": true, "falseEdge": "JBB", "trueEdge": "JBR" },
+    { "id": "R", "type": "Destination", "x": 0.25, "y": 0.95, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.75, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SRC1", "from": "SR", "to": "C1" },
+    { "id": "C1C2", "from": "C1", "to": "C2" },
+    { "id": "C2JR", "from": "C2", "to": "JR" },
+    { "id": "JRR", "from": "JR", "to": "R" },
+    { "id": "JRB", "from": "JR", "to": "B" },
+    { "id": "SBJB", "from": "SB", "to": "JB" },
+    { "id": "JBB", "from": "JB", "to": "B" },
+    { "id": "JBR", "from": "JB", "to": "R" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "SR", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "SB", "beat": 2 }
+  ],
+  "maxBeats": 6,
+  "threeStarBeats": 4,
+  "twoStarBeats": 5
+}

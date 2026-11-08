@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "levels": [
+    { "number": 1, "levelId": "tutorial", "resource": "Levels/tutorial", "titleKey": "level1Title", "instructionKey": "level1Instructions", "solution": ["Move", "Move", "Move", "PulseA"] },
+    { "number": 2, "levelId": "shared-control", "resource": "Levels/shared-control", "titleKey": "level2Title", "instructionKey": "level2Instructions", "solution": ["PulseA", "Move"] },
+    { "number": 3, "levelId": "competing-routes", "resource": "Levels/competing-routes", "titleKey": "level3Title", "instructionKey": "level3Instructions", "solution": ["Move", "PulseA", "PulseA"] },
+    { "number": 4, "levelId": "timing-the-pulse", "resource": "Levels/timing-the-pulse", "titleKey": "level4Title", "instructionKey": "level4Instructions", "solution": ["Move", "PulseA", "Move", "PulseA"] },
+    { "number": 5, "levelId": "second-circuit", "resource": "Levels/second-circuit", "titleKey": "level5Title", "instructionKey": "level5Instructions", "solution": ["Move", "PulseA", "PulseB"] },
+    { "number": 6, "levelId": "synchronized-network", "resource": "Levels/synchronized-network", "titleKey": "level6Title", "instructionKey": "level6Instructions", "solution": ["Move", "PulseA", "PulseB", "PulseB"] },
+    { "number": 7, "levelId": "chain-reaction", "resource": "Levels/chain-reaction", "titleKey": "level7Title", "instructionKey": "level7Instructions", "solution": ["PulseA", "Move", "Move"] },
+    { "number": 8, "levelId": "factory-challenge", "resource": "Levels/factory-challenge", "titleKey": "level8Title", "instructionKey": "level8Instructions", "solution": ["Move", "PulseA", "PulseB", "PulseA"] }
+  ]
+}

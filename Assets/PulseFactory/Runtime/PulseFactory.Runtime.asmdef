@@ -1,5 +1,5 @@
 {
   "name": "PulseFactory.Runtime",
   "rootNamespace": "PulseFactory",
-  "references": ["PulseFactory.Core", "PulseFactory.Services"]
+  "references": ["PulseFactory.Core", "PulseFactory.Services", "UnityEngine.UI", "Unity.TextMeshPro"]
 }

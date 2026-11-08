@@ -64,8 +64,7 @@ namespace PulseFactory.Localization
 
         public string Display(string key, params object[] arguments)
         {
-            var text = Text(key, arguments);
-            return RightToLeft ? HebrewVisualOrder(text) : text;
+            return Text(key, arguments);
         }
 
         public string DisplayWrapped(string key, Func<string, bool> fits, params object[] arguments)
@@ -86,23 +85,7 @@ namespace PulseFactory.Localization
                 }
                 lines.Add(line);
             }
-            // Wrap logical text first so RTL paragraphs retain their top-to-bottom reading order.
-            return string.Join("\n", lines.Select(line => RightToLeft ? HebrewVisualOrder(line) : line));
-        }
-
-        // IMGUI lacks bidi layout. This handles the supplied unpointed Hebrew with isolated ASCII runs.
-        // It is intentionally not a general Unicode bidi implementation.
-        public static string HebrewVisualOrder(string text)
-        {
-            return string.Join("\n", text.Split('\n').Select(line =>
-            {
-                var elements = new List<string>();
-                var iterator = StringInfo.GetTextElementEnumerator(line);
-                while (iterator.MoveNext()) elements.Add(iterator.GetTextElement());
-                elements.Reverse();
-                return Regex.Replace(string.Concat(elements), @"[A-Za-z0-9]+(?:[./:-][A-Za-z0-9]+)*",
-                    match => new string(match.Value.Reverse().ToArray()));
-            }));
+            return string.Join("\n", lines);
         }
 
         [DataContract]

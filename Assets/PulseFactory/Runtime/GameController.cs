@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -6,75 +8,121 @@ using PulseFactory.Core;
 using PulseFactory.Localization;
 using PulseFactory.Persistence;
 using PulseFactory.Presentation;
+using TMPro;
 using UnityEngine;
 
 namespace PulseFactory.UI
 {
     public sealed class GameController : MonoBehaviour
     {
-        [SerializeField] private string levelResource = "Levels/tutorial";
-        [SerializeField] private int levelNumber = 1;
         private LocalizationCatalog english;
         private LocalizationCatalog hebrew;
         private LocalizationCatalog text;
-        private SaveStore store;
+        private LevelCatalog catalog;
+        private LevelDefinition[] levels;
+        private SaveStore saveStore;
         private SaveData save;
-        private BoardRenderer board;
-        private Font font;
-        private bool hebrewFontAvailable;
-        private string warningKey;
+        private PlaytestStatsStore stats;
+        private TMP_FontAsset font;
+        private GameUI ui;
+        private LevelCatalogEntry currentEntry;
+        private float levelStartedAt;
+        private bool animationRunning;
         private bool loadFailed;
-        private GUIStyle label;
-        private GUIStyle title;
-        private GUIStyle button;
+        private string warningKey;
+        private string exportResultKey = "statsDisclaimer";
+        private const float PackageAnimationSeconds = 0.34f;
+
         public GameSession Session { get; private set; }
-        public bool IsAnimating => board != null && board.IsAnimating(Time.unscaledTime);
+        public bool IsAnimating => animationRunning;
         public bool ReducedMotion => save != null && save.ReducedMotion;
+        public string Locale => text?.Locale ?? "en";
+        public int CurrentLevelNumber => currentEntry?.Number ?? 0;
+        public GameUI UI => ui;
+
 #if UNITY_EDITOR
         internal static string TestSavePath { get; set; }
+        internal static string TestStatsPath { get; set; }
 #endif
 
         private void Awake()
         {
             try
             {
-                english = new LocalizationCatalog(Resource("Localization/en"));
-                english.ValidateRequiredKeys("loadError");
-                text = english;
-                hebrew = new LocalizationCatalog(Resource("Localization/he"));
-                english.ValidateKeys(hebrew);
-                english.ValidateRequiredKeys("title", "tutorial", "move", "pulseA", "pulseB", "undo", "restart",
-                    "language", "motionOn", "motionOff", "beat", "switches", "progress", "best", "playing",
-                    "animating", "victory", "failureCollision", "failureWrongDestination", "failureDestinationFull",
-                    "failureBeatLimit", "hint", "schedule", "legend", "source", "diverter", "red", "blue",
-                    "redSymbol", "blueSymbol", "destinationCount", "saveWarning", "fontWarning");
-                font = Font.CreateDynamicFontFromOSFont(new[] { "Arial", "Arial Hebrew", "Noto Sans Hebrew", "DejaVu Sans" }, 22);
-                hebrewFontAvailable = font != null && Enumerable.Range(0x05D0, 27).All(c => font.HasCharacter((char)c));
-                // Batch-mode tests never touch the player's real progression.
-                string filename = Application.isBatchMode ? "progress-batch.json" : "progress.json";
-                string savePath = Path.Combine(Application.persistentDataPath, filename);
-#if UNITY_EDITOR
-                savePath = TestSavePath ?? savePath;
-#endif
-                store = new SaveStore(savePath, Debug.LogWarning);
-                save = store.Load();
-                if (store.HadLoadError) warningKey = "saveWarning";
-                if (save.Locale == "he")
-                {
-                    if (hebrewFontAvailable) text = hebrew;
-                    else { warningKey = "fontWarning"; Debug.LogWarning(english.Text("fontWarning")); }
-                }
-                Session = new GameSession(LevelJson.Parse(Resource(levelResource)));
-                board = new BoardRenderer(Session.Engine);
-                Application.targetFrameRate = 60;
-                Screen.orientation = ScreenOrientation.Portrait;
+                LoadContent();
+                ConfigureLocalStores();
+                CreateUI();
+                RefreshMenu();
             }
             catch (Exception ex) when (ex is LevelValidationException || ex is SerializationException
-                || ex is IOException || ex is ArgumentException || ex is InvalidOperationException)
+                || ex is IOException || ex is ArgumentException || ex is InvalidOperationException
+                || ex is KeyNotFoundException)
             {
                 loadFailed = true;
                 Debug.LogError("Pulse Factory initialization failed: " + ex);
             }
+        }
+
+        private void LoadContent()
+        {
+            english = new LocalizationCatalog(Resource("Localization/en"));
+            hebrew = new LocalizationCatalog(Resource("Localization/he"));
+            english.ValidateKeys(hebrew);
+            english.ValidateRequiredKeys("title", "menuSubtitle", "levelSelect", "levelCounter", "playtestLevel",
+                "levelSummary", "locked", "playtestExport", "exportComplete", "exportFailed", "statsDisclaimer",
+                "move", "pulseA", "pulseB", "undo", "restart", "back", "nextLevel", "playAgain", "tryAgain",
+                "motionOn", "motionOff", "languageEnglish", "languageHebrew", "beat", "switches", "progress",
+                "best", "playing", "animating", "victory", "levelComplete", "allComplete", "failedTitle",
+                "failureCollision", "failureWrongDestination", "failureDestinationFull", "failureBeatLimit",
+                "switchOn", "switchOff", "switchA", "switchB", "source", "nodeSource", "nodeConveyor",
+                "nodeDiverter", "nodeDestination", "red", "blue", "redSymbol", "blueSymbol", "sourceIcon", "saveWarning");
+
+            catalog = LevelCatalog.Parse(Resource("Levels/catalog"));
+            levels = catalog.Levels.Select(entry =>
+            {
+                var definition = LevelJson.Parse(Resource(entry.Resource));
+                if (!string.Equals(definition.Id, entry.LevelId, StringComparison.Ordinal))
+                    throw new LevelValidationException("Catalog ID does not match level resource: " + entry.Resource);
+                return definition;
+            }).ToArray();
+            foreach (var entry in catalog.Levels)
+                english.ValidateRequiredKeys(entry.TitleKey, entry.InstructionKey);
+
+            font = Resources.Load<TMP_FontAsset>("Fonts/NotoSansHebrew SDF");
+            if (font == null)
+                throw new InvalidOperationException("Missing packaged bilingual TMP font at Resources/Fonts/NotoSansHebrew SDF.asset.");
+        }
+
+        private void ConfigureLocalStores()
+        {
+            text = english;
+            string saveName = Application.isBatchMode ? "progress-batch.json" : "progress.json";
+            string statsName = Application.isBatchMode ? "playtest-stats-batch.json" : "playtest-stats.json";
+            string savePath = Path.Combine(Application.persistentDataPath, saveName);
+            string statsPath = Path.Combine(Application.persistentDataPath, statsName);
+#if UNITY_EDITOR
+            savePath = TestSavePath ?? savePath;
+            statsPath = TestStatsPath ?? statsPath;
+#endif
+            saveStore = new SaveStore(savePath, Debug.LogWarning);
+            save = saveStore.Load();
+            stats = new PlaytestStatsStore(statsPath, Debug.LogWarning);
+            if (saveStore.HadLoadError) warningKey = "saveWarning";
+            text = save.Locale == "he" ? hebrew : english;
+            Application.targetFrameRate = 60;
+            Screen.orientation = ScreenOrientation.Portrait;
+        }
+
+        private void CreateUI()
+        {
+            var root = new GameObject("Pulse Factory UI", typeof(RectTransform));
+            ui = root.AddComponent<GameUI>();
+            ui.Build(font, text, catalog, levels, number => { SelectLevel(number); },
+                command => { Execute(command); }, Undo, Restart,
+                ReturnToLevelSelect, ToggleReducedMotion, ToggleLocale, () => { ExportPlaytestData(); },
+                NextLevel, Restart);
+            ui.UpdateLocale(text);
+            RefreshMenu();
         }
 
         private static string Resource(string path)
@@ -84,84 +132,178 @@ namespace PulseFactory.UI
             return asset.text;
         }
 
+        public bool SelectLevel(int number)
+        {
+            if (loadFailed || animationRunning) return false;
+            if (number < 1 || number > catalog.Levels.Count)
+                throw new ArgumentOutOfRangeException(nameof(number));
+            if (number > save.HighestUnlockedLevel)
+            {
+                Debug.LogWarning("Ignored locked level selection: " + number);
+                return false;
+            }
+
+            currentEntry = catalog.Levels[number - 1];
+            Session = new GameSession(levels[number - 1]);
+            levelStartedAt = Time.realtimeSinceStartup;
+            stats.RecordStart(currentEntry.LevelId);
+            ui.ShowGameplay();
+            ui.SetLevel(Session.Engine, Session.State);
+            warningKey = saveStore.HadLoadError ? "saveWarning" : null;
+            RefreshGameplay();
+            return true;
+        }
+
         public bool Execute(SimulationCommand command)
         {
-            if (loadFailed || Session == null || IsAnimating || !Session.Engine.IsAvailable(Session.State, command))
+            if (loadFailed || Session == null || IsAnimating
+                || !Session.Engine.IsAvailable(Session.State, command))
             {
                 Debug.LogWarning("Ignored unavailable simulation command: " + command);
                 return false;
             }
+
             var result = Session.Execute(command);
-            board.Animate(result, Time.unscaledTime, save.ReducedMotion);
+            stats.RecordCommand(currentEntry.LevelId, result.State.Result.Status == LevelStatus.Failed);
             if (result.State.Result.Status == LevelStatus.Victory)
             {
-                save.RecordVictory(Session.Engine.Level.Id, levelNumber, result.State.Result.Stars);
+                save.RecordVictory(Session.Engine.Level.Id, currentEntry.Number, result.State.Result.Stars);
                 Persist();
+                stats.RecordCompletion(currentEntry.LevelId,
+                    Math.Max(0, Time.realtimeSinceStartup - levelStartedAt));
             }
+            animationRunning = true;
+            RefreshGameplay("animating");
+            StartCoroutine(Animate(result));
             return true;
+        }
+
+        private IEnumerator Animate(SimulationResult result)
+        {
+            yield return ui.Board.Present(result, ReducedMotion ? 0 : PackageAnimationSeconds);
+            animationRunning = false;
+            RefreshGameplay();
+            if (result.State.Result.Status == LevelStatus.Victory)
+            {
+                bool finalLevel = currentEntry.Number == catalog.Levels.Count;
+                ui.ShowVictory(result.State.Result.Stars, finalLevel, !finalLevel);
+            }
+            else if (result.State.Result.Status == LevelStatus.Failed)
+                ui.ShowFailure("failure" + result.State.Result.Failure);
         }
 
         public void Undo()
         {
             if (Session == null || IsAnimating || !Session.CanUndo)
-            { Debug.LogWarning("Ignored unavailable undo."); return; }
+            {
+                Debug.LogWarning("Ignored unavailable undo.");
+                return;
+            }
             Session.Undo();
-            board.Reset();
+            stats.RecordUndo(currentEntry.LevelId);
+            ui.Outcome.Hide();
+            ui.Board.SetLevel(Session.Engine, Session.State);
+            RefreshGameplay();
         }
 
         public void Restart()
         {
             if (Session == null || IsAnimating)
-            { Debug.LogWarning("Ignored unavailable restart."); return; }
+            {
+                Debug.LogWarning("Ignored unavailable restart.");
+                return;
+            }
             Session.Restart();
-            board.Reset();
+            levelStartedAt = Time.realtimeSinceStartup;
+            stats.RecordRestart(currentEntry.LevelId);
+            ui.Outcome.Hide();
+            ui.Board.SetLevel(Session.Engine, Session.State);
+            RefreshGameplay();
+        }
+
+        public void ReturnToLevelSelect()
+        {
+            if (IsAnimating) return;
+            Session = null;
+            currentEntry = null;
+            ui.ShowLevelSelect();
+            RefreshMenu();
+        }
+
+        public void ToggleLocale()
+        {
+            text = text.Locale == "en" ? hebrew : english;
+            save.Locale = text.Locale;
+            Persist();
+            ui.UpdateLocale(text);
+            RefreshMenu();
+            RefreshGameplay();
+        }
+
+        public void ToggleReducedMotion()
+        {
+            save.ReducedMotion = !save.ReducedMotion;
+            Persist();
+            RefreshMenu();
+            RefreshGameplay();
+        }
+
+        public bool ExportPlaytestData()
+        {
+            string directory = Path.Combine(Application.persistentDataPath, "exports");
+            string path = stats.Export(directory);
+            exportResultKey = path == null ? "exportFailed" : "exportComplete";
+            if (path != null) Debug.Log("Anonymous playtest data exported to " + path);
+            ui.SetExportResult(exportResultKey);
+            RefreshMenu();
+            return path != null;
+        }
+
+        private void OnDestroy()
+        {
+            if (ui == null) return;
+            if (Application.isPlaying) Destroy(ui.gameObject);
+            else DestroyImmediate(ui.gameObject);
+        }
+
+        private void NextLevel()
+        {
+            if (currentEntry == null || currentEntry.Number >= catalog.Levels.Count) return;
+            SelectLevel(currentEntry.Number + 1);
         }
 
         private void Persist()
         {
-            if (!store.Save(save)) warningKey = "saveWarning";
+            if (!saveStore.Save(save)) warningKey = "saveWarning";
+            else if (warningKey == "saveWarning") warningKey = null;
         }
 
-        private void ToggleLocale()
+        private void RefreshMenu()
         {
-            if (text == english && !hebrewFontAvailable)
-            {
-                warningKey = "fontWarning";
-                Debug.LogWarning(english.Text("fontWarning"));
-                return;
-            }
-            text = text == english ? hebrew : english;
-            save.Locale = text.Locale;
-            Persist();
+            if (ui != null && save != null)
+                ui.UpdateMenu(save, ReducedMotion, warningKey ?? exportResultKey);
         }
 
-        private void OnDestroy() { if (font != null) Destroy(font); }
-
-        private void OnGUI()
+        private void RefreshGameplay(string overrideKey = null)
         {
-            if (text == null) return; // Missing English resources are a fatal, logged content error.
-            if (label == null)
-            {
-                label = new GUIStyle(GUI.skin.label)
-                { font = font, fontSize = 18, alignment = TextAnchor.MiddleCenter, wordWrap = true };
-                label.normal.textColor = Color.white;
-                title = new GUIStyle(label) { fontSize = 30, fontStyle = FontStyle.Bold };
-                button = new GUIStyle(GUI.skin.button) { font = font, fontSize = 20, wordWrap = true };
-            }
-            var viewport = FitPortraitViewport(Screen.safeArea, Screen.height);
-            float scale = viewport.width / 480f;
-            if (scale <= 0) return;
-            var previousMatrix = GUI.matrix;
-            bool previousEnabled = GUI.enabled;
-            var origin = new Vector3(viewport.x, viewport.y, 0);
-            GUI.matrix = Matrix4x4.TRS(origin, Quaternion.identity, new Vector3(scale, scale, 1));
-            BoardRenderer.Fill(new Rect(0, 0, 480, 900), new Color(0.035f, 0.055f, 0.10f));
-            GUI.Label(new Rect(15, 8, 450, 45), text.Display("title"), title);
-            if (loadFailed)
-                LocalizedLabel(new Rect(25, 100, 430, 200), "loadError");
-            else DrawGame();
-            GUI.enabled = previousEnabled;
-            GUI.matrix = previousMatrix;
+            if (ui == null || Session == null || currentEntry == null) return;
+            string key = overrideKey ?? FeedbackKey();
+            object[] args = Session.State.Result.Status == LevelStatus.Victory
+                ? new object[] { Session.State.Result.Stars }
+                : Array.Empty<object>();
+            int stars = save.BestResults.FirstOrDefault(item => item.LevelId == currentEntry.LevelId)?.Stars ?? 0;
+            ui.UpdateGameplay(currentEntry, Session.Engine.Level, Session.Engine, Session.State, stars,
+                Session.CanUndo, IsAnimating, ReducedMotion, key, args);
+        }
+
+        private string FeedbackKey()
+        {
+            if (IsAnimating) return "animating";
+            if (Session.State.Result.Status == LevelStatus.Failed)
+                return "failure" + Session.State.Result.Failure;
+            if (Session.State.Result.Status == LevelStatus.Victory) return "victory";
+            if (warningKey != null) return warningKey;
+            return "playing";
         }
 
         internal static Rect FitPortraitViewport(Rect safe, float screenHeight)
@@ -170,59 +312,6 @@ namespace PulseFactory.UI
             var size = new Vector2(480 * scale, 900 * scale);
             return new Rect(safe.x + (safe.width - size.x) / 2,
                 screenHeight - safe.yMax + (safe.height - size.y) / 2, size.x, size.y);
-        }
-
-        private void DrawGame()
-        {
-            var state = Session.State;
-            var level = Session.Engine.Level;
-            GUI.Label(new Rect(15, 53, 450, 30), text.Display("tutorial"), label);
-            GUI.Label(new Rect(15, 86, 450, 28), text.Display("beat", state.Beat, level.MaxBeats), label);
-            GUI.Label(new Rect(15, 115, 450, 28), text.Display("switches", state.Switches.A ? 1 : 0, state.Switches.B ? 1 : 0), label);
-            GUI.Label(new Rect(15, 144, 450, 28), text.Display("progress", state.Deliveries.Count, level.Spawns.Count), label);
-            board.Draw(new Rect(15, 180, 450, 335), state, text, label, Time.unscaledTime);
-            GUI.Label(new Rect(15, 517, 450, 25), text.Display("legend"), label);
-            string statusKey;
-            if (IsAnimating) statusKey = "animating";
-            else if (state.Result.Status == LevelStatus.Victory) statusKey = "victory";
-            else if (state.Result.Status == LevelStatus.Failed) statusKey = "failure" + state.Result.Failure;
-            else statusKey = "playing";
-            LocalizedLabel(new Rect(20, 545, 440, 52), statusKey, state.Result.Stars);
-
-            CommandButton(0, "move", SimulationCommand.Move);
-            CommandButton(1, "pulseA", SimulationCommand.PulseA);
-            CommandButton(2, "pulseB", SimulationCommand.PulseB);
-            GUI.enabled = !IsAnimating && Session.CanUndo;
-            if (GUI.Button(ControlRect(0, 2, 665), text.Display("undo"), button)) Undo();
-            GUI.enabled = !IsAnimating;
-            if (GUI.Button(ControlRect(1, 2, 665), text.Display("restart"), button)) Restart();
-            if (GUI.Button(ControlRect(0, 2, 727), text.Display("language"), button)) ToggleLocale();
-            if (GUI.Button(ControlRect(1, 2, 727), text.Display(save.ReducedMotion ? "motionOff" : "motionOn"), button))
-            { save.ReducedMotion = !save.ReducedMotion; Persist(); }
-            GUI.enabled = true;
-            int best = save.BestResults.FirstOrDefault(p => p.LevelId == level.Id)?.Stars ?? 0;
-            GUI.Label(new Rect(15, 785, 450, 25), text.Display("best", best), label);
-            LocalizedLabel(new Rect(15, 812, 450, 32), "schedule");
-            LocalizedLabel(new Rect(15, 845, 450, 45), warningKey ?? "hint");
-        }
-
-        private void LocalizedLabel(Rect area, string key, params object[] arguments)
-        {
-            var wrapped = text.DisplayWrapped(key, value => label.CalcSize(new GUIContent(value)).x <= area.width, arguments);
-            GUI.Label(area, wrapped, label);
-        }
-
-        private Rect ControlRect(int index, int count, float y)
-        {
-            if (text.RightToLeft) index = count - 1 - index;
-            float width = (450f - (count - 1) * 10) / count;
-            return new Rect(15 + index * (width + 10), y, width, 54);
-        }
-
-        private void CommandButton(int index, string key, SimulationCommand command)
-        {
-            GUI.enabled = !IsAnimating && Session.Engine.IsAvailable(Session.State, command);
-            if (GUI.Button(ControlRect(index, 3, 603), text.Display(key), button)) Execute(command);
         }
     }
 }

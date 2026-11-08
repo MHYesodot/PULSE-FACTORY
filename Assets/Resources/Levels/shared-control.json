@@ -1,0 +1,28 @@
+{
+  "id": "shared-control",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "S1", "type": "Source", "x": 0.2, "y": 0.05 },
+    { "id": "S2", "type": "Source", "x": 0.8, "y": 0.05 },
+    { "id": "J1", "type": "Diverter", "x": 0.2, "y": 0.5, "group": "A", "falseEdge": "J1B", "trueEdge": "J1R" },
+    { "id": "J2", "type": "Diverter", "x": 0.8, "y": 0.5, "group": "A", "inverted": true, "falseEdge": "J2B", "trueEdge": "J2R" },
+    { "id": "R", "type": "Destination", "x": 0.2, "y": 0.95, "accepts": "red", "requiredCount": 1 },
+    { "id": "B", "type": "Destination", "x": 0.8, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "S1J1", "from": "S1", "to": "J1" },
+    { "id": "S2J2", "from": "S2", "to": "J2" },
+    { "id": "J1R", "from": "J1", "to": "R" },
+    { "id": "J1B", "from": "J1", "to": "B" },
+    { "id": "J2R", "from": "J2", "to": "R" },
+    { "id": "J2B", "from": "J2", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "S1", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "S2", "beat": 1 }
+  ],
+  "maxBeats": 4,
+  "threeStarBeats": 2,
+  "twoStarBeats": 3
+}

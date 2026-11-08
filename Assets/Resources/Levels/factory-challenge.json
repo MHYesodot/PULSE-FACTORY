@@ -1,0 +1,38 @@
+{
+  "id": "factory-challenge",
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "SR1", "type": "Source", "x": 0.2, "y": 0.05 },
+    { "id": "JA1", "type": "Diverter", "x": 0.2, "y": 0.45, "group": "A", "falseEdge": "J1B", "trueEdge": "J1R" },
+    { "id": "SB", "type": "Source", "x": 0.5, "y": 0.05 },
+    { "id": "CB", "type": "Conveyor", "x": 0.5, "y": 0.3 },
+    { "id": "JB", "type": "Diverter", "x": 0.5, "y": 0.6, "group": "B", "falseEdge": "JBR", "trueEdge": "JBB" },
+    { "id": "SR2", "type": "Source", "x": 0.8, "y": 0.05 },
+    { "id": "CR2", "type": "Conveyor", "x": 0.8, "y": 0.3 },
+    { "id": "JA2", "type": "Diverter", "x": 0.8, "y": 0.6, "group": "A", "falseEdge": "J2R", "trueEdge": "J2B" },
+    { "id": "R", "type": "Destination", "x": 0.35, "y": 0.95, "accepts": "red", "requiredCount": 2 },
+    { "id": "B", "type": "Destination", "x": 0.7, "y": 0.95, "accepts": "blue", "requiredCount": 1 }
+  ],
+  "edges": [
+    { "id": "SR1JA1", "from": "SR1", "to": "JA1" },
+    { "id": "J1R", "from": "JA1", "to": "R" },
+    { "id": "J1B", "from": "JA1", "to": "B" },
+    { "id": "SBCB", "from": "SB", "to": "CB" },
+    { "id": "CBJB", "from": "CB", "to": "JB" },
+    { "id": "JBR", "from": "JB", "to": "R" },
+    { "id": "JBB", "from": "JB", "to": "B" },
+    { "id": "SR2CR2", "from": "SR2", "to": "CR2" },
+    { "id": "CR2JA2", "from": "CR2", "to": "JA2" },
+    { "id": "J2R", "from": "JA2", "to": "R" },
+    { "id": "J2B", "from": "JA2", "to": "B" }
+  ],
+  "initialSwitches": { "a": false, "b": false },
+  "spawns": [
+    { "id": "red-1", "kind": "red", "source": "SR1", "beat": 1 },
+    { "id": "blue-1", "kind": "blue", "source": "SB", "beat": 2 },
+    { "id": "red-2", "kind": "red", "source": "SR2", "beat": 2 }
+  ],
+  "maxBeats": 6,
+  "threeStarBeats": 4,
+  "twoStarBeats": 5
+}

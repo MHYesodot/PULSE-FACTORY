@@ -1,88 +1,87 @@
-# Pulse Factory — phase 1.1
+# PULSE FACTORY — Phase 2: Proof of Fun Prototype
 
-A deterministic, turn-based conveyor puzzle prototype. No backend, accounts,
-analytics, monetization, or real-time reaction mechanics.
+A deterministic, turn-based conveyor-puzzle vertical slice with eight authored
+levels, local progression, anonymous aggregate playtest statistics, and
+English/Hebrew UI. This is a prototype foundation, not a claim that the game
+has been user-tested for fun or visual polish.
 
 ## Status
 
-Implemented: isolated simulation, validated JSON levels, tutorial scene and
-placeholder rendering, command controls, animation lockout, undo/restart,
-versioned local progression, English/Hebrew resources, Edit Mode regression
-tests, and a Play Mode scene smoke test.
+Unity 6000.0.62f1 imports and compiles the project. The retained uGUI/TextMeshPro
+interface and the static, OFL-licensed bilingual font asset are in place. Unity
+Edit Mode tests pass **68/68** and Play Mode tests pass **11/11**; see the
+Phase 2 validation record below. The macOS development player was built
+successfully, but was not manually launched or visually reviewed. Human
+playtesting, enjoyment, touch usability, and Hebrew layout quality remain
+unverified.
 
-**The tutorial is confirmed playable in Unity Editor on macOS.** Unity
-6000.0.62f1 imports the project and compiles the runtime, Editor tools, and test
-assemblies. The standalone macOS development player also builds and runs.
-Automated tests and user-performed mouse/visual checks are recorded separately
-below. This remains a geometric prototype, not a commercial-quality interface.
-
-**iOS is an open gate:** the configured Editor has no iOS Build Support module.
-No Xcode project was generated, no iOS build was executed, and no physical-device
-gameplay or touch/Safe Area validation was performed.
+**iOS is an open gate:** this Editor has no iOS Build Support module. No Xcode
+project was generated, no iOS build was executed, and no device was tested.
+There are no backend, accounts, ads, purchases, multiplayer, or network
+dependencies.
 
 ## Open and play
 
 1. Install [Unity Hub](https://unity.com/download) using its official macOS
    installer. Sign in and activate an eligible license yourself. On Apple
-   silicon, **Rosetta 2 is required even for the native Editor**: use Apple's
-   installation prompt or `softwareupdate --install-rosetta` and review/accept
-   its terms. Do not disable Gatekeeper or other OS protections.
+   silicon, install Rosetta only if Unity requests it; do not disable Gatekeeper
+   or other OS protections.
 2. Install **Unity 6 LTS 6000.0.62f1, Apple silicon**, from the
    [release page](https://unity.com/releases/editor/whats-new/6000.0.62f1) or
    `unityhub://6000.0.62f1/f99f05b3e950`. Add this repository folder in Hub and
-   open it with that version. No Editor upgrade is necessary. Allow package
-   resolution; Unity resolves its bundled Test Framework 1.6.0 and NUnit 2.0.5
-   package. The generated lockfile, project settings, and asset metadata are now
-   included. No replacement project or rendering pipeline is needed.
+   open it with that version. Allow package resolution. The project includes
+   uGUI 2.0.0, the Unity Test Framework, and the official TextMeshPro essential
+   resources needed by the packaged font. No rendering-pipeline replacement is
+   required.
 3. Open [`Assets/Scenes/Tutorial.unity`](Assets/Scenes/Tutorial.unity) and press
-   **Play**. It is also registered as the first build scene.
-4. Use **MOVE, MOVE, MOVE, PULSE A**. Red arrives on beat 2, blue on beat 4,
-   earning three stars. Four MOVE commands instead fail on beat 4.
-5. **UNDO** restores the last logical snapshot, including after failure/victory.
-   **RESTART** clears history and restores beat 0 and initial switches.
-6. Language and animation settings are available below the gameplay controls.
-   PULSE B is disabled in this tutorial because there are no group B diverters.
-7. For representative mobile layout, select **9:16** in the Game view aspect
-   dropdown (add an Aspect Ratio entry of 9 by 16 if needed) and use **Fit/1x**.
-   The interface fits a 480-by-900 portrait canvas; wide Free Aspect windows
-   intentionally have horizontal margins. Game view **2x** is Editor zoom, not
-   application UI scaling. A 9:16 viewport uses the full height and about 95% of
-   the width. Maximize the Game tab if the docked preview is physically small.
+   **Play**. Choose an unlocked route on the level-selection screen; Level 1 is
+   the original tutorial.
+4. The tutorial solution is **MOVE, MOVE, MOVE, PULSE A**. The simulation tests
+   confirm both packages reach their matching destinations and win on beat 4.
+   An incorrect route fails atomically; use **UNDO** to restore the previous
+   state or **RESTART** to reset the level.
+5. Complete a level to unlock the next. The eight solutions are authored and
+   replayed by regression tests; they are not shown in the player UI.
+6. Language and reduced-motion controls are available on the level screen and
+   during gameplay. Packages use both color and distinct `+`/`X` marks. Hebrew
+   strings remain logical text and are rendered through TextMeshPro RTL mode;
+   this is basic Hebrew support, not full Unicode bidirectional-text support.
+7. **EXPORT PLAYTEST DATA** writes local aggregate counters to
+   `Application.persistentDataPath/exports/pulse-factory-playtest-v1.json`.
+   Saves and statistics stay on the device; there is no account, session
+   identifier, telemetry endpoint, or network transfer.
 
 The **Pulse Factory > Play Tutorial** menu opens the authored scene and enters
 Play Mode. **Validate Tutorial Scene** checks enabled build references, missing
-script components, the camera/controller, and the actual level JSON. These
-tools refuse to replace a dirty scene; save or close your changes first.
+script components, the camera/controller, and the tutorial JSON. These Editor
+tools refuse to replace a dirty scene; save or close changes first.
 
-Each command costs exactly one beat. Pulses toggle their group **before**
-movement. Commands, undo, restart, and settings are locked during the 0.32-second
-animation; disabling animation makes transitions immediate. Gameplay has no
-timer and never depends on animation speed. The immediate-mode controls accept
-mouse/touch events; mouse operation is confirmed, but actual touch interaction
-still needs device verification.
-
-The prototype requests portrait orientation and fits its board inside the
-screen safe area. No signing credentials or shipping player settings are
-included. See the separate iOS build instructions below.
+Each accepted command advances exactly one logical beat. Pulses toggle their
+group **before** movement. Input is locked while packages animate; reduced
+motion skips movement animation without changing the simulation. The prototype
+requests portrait orientation and anchors its interface to the device safe
+area. No signing credentials or shipping player settings are included. Actual
+mouse/touch handling, device safe-area fit, and visual appearance still require
+human verification. See the separate iOS build instructions below.
 
 ## Structure and dependencies
 
 | Location | Responsibility |
 |---|---|
-| [`Assets/PulseFactory/Core`](Assets/PulseFactory/Core) | Immutable domain models, validation/JSON codec, simulation engine, undo/restart session |
-| [`Assets/PulseFactory/Services`](Assets/PulseFactory/Services) | Local save storage and localization; no Unity API dependency |
-| [`Assets/PulseFactory/Runtime`](Assets/PulseFactory/Runtime) | Unity input/UI controller and replaceable geometric board renderer |
-| [`Assets/PulseFactory/Editor`](Assets/PulseFactory/Editor) | Scene validation/launch menu and reproducible macOS validation build |
-| [`Assets/Resources/Levels`](Assets/Resources/Levels) | Versioned authored level data |
-| [`Assets/Resources/Localization`](Assets/Resources/Localization) | English/Hebrew strings with identical keys and format arguments |
-| [`Assets/PulseFactory/Tests`](Assets/PulseFactory/Tests) | Edit Mode domain/services tests and Play Mode scene smoke test |
-| [`Tools/DomainChecks`](Tools/DomainChecks) | Standalone NUnit runner linking the same C# sources and Edit Mode tests |
+| [`Assets/PulseFactory/Core`](Assets/PulseFactory/Core) | Immutable simulation, level validation/catalog, and bounded shortest-solution solver |
+| [`Assets/PulseFactory/Services`](Assets/PulseFactory/Services) | Local progression, aggregate playtest statistics, and localization; no Unity API dependency |
+| [`Assets/PulseFactory/Runtime`](Assets/PulseFactory/Runtime) | Retained uGUI/TMP controls, board and package views, input lockout, and safe-area layout |
+| [`Assets/PulseFactory/Editor`](Assets/PulseFactory/Editor) | Scene validation, macOS build, and static bilingual font generation |
+| [`Assets/Resources/Levels`](Assets/Resources/Levels) | Eight data-authored levels, catalog, and intended command sequences |
+| [`Assets/Resources/Localization`](Assets/Resources/Localization) | English/Hebrew UI and level strings with synchronized keys/placeholders |
+| [`Assets/Fonts`](Assets/Fonts) | Noto Sans Hebrew source and SIL Open Font License |
+| [`Assets/PulseFactory/Tests`](Assets/PulseFactory/Tests) | Shared regression, TMP font, and Play Mode integration tests |
+| [`Tools/DomainChecks`](Tools/DomainChecks) | Standalone NUnit runner linking shared C# sources and domain/service tests |
 
 Core and Services have `noEngineReferences` assembly definitions. Runtime
-references both; neither domain assembly references Runtime. Modules remain
-small: Core combines tightly related simulation and level code rather than
-creating an assembly for every namespace. Runtime presentation uses built-in
-IMGUI and temporary geometry, with no external UI/art dependency.
+references both plus Unity UI and TextMeshPro; neither domain assembly
+references Runtime. The simulation remains pure C#. The graph and package views
+are prototype geometry rather than final artwork.
 
 ## Simulation contract
 
@@ -196,37 +195,31 @@ All interface copy is in the two locale JSON resources. Missing/duplicate keys
 and mismatched key/placeholder sets are errors. Startup also checks the keys
 actually required by the UI: removing a key from both locales cannot pass
 parity validation and then throw repeatedly during rendering. Bad content
-blocks gameplay with a logged error and the localized load-error screen when
-the English error resource is available; a missing English error resource is a
-fatal logged initialization error. Color and `+`/`X` symbols identify
-packages and matching destinations independently of color alone.
+blocks initialization with a logged error. Red packages use a plus and blue
+packages use an X, so type is not conveyed by color alone. UI strings and
+instructions are data-driven.
 
-Hebrew mirrors control order and uses visual ordering for the supplied
-unpointed Hebrew strings. Paragraphs wrap in logical order before their lines
-are reordered for IMGUI. ASCII tokens/numbers retain their internal order.
-The graph itself is not mirrored. A system font with Hebrew glyphs is requested;
-if unavailable, the UI remains English and reports the limitation.
-
-This is a deliberately small RTL foundation, **not** a complete Unicode bidi
-engine, Arabic shaper, or font-distribution solution. Hebrew font availability,
-mixed punctuation, line layout, safe-area fit, and minimum touch-target sizes
-have been manually checked in the macOS Editor but still require target-device
-checks. Final artwork and production UI can replace
-BoardRenderer without changing simulation.
+The retained interface uses TextMeshPro with `isRightToLeftText` for the
+unpointed Hebrew translations. A static SDF font is generated from Noto Sans
+Hebrew; its source and SIL Open Font License are retained under
+[`Assets/Fonts`](Assets/Fonts). This is basic Hebrew rendering, **not** a full
+Unicode bidi engine, Arabic shaper, or comprehensive mixed-direction text
+solution. No visual review of Hebrew layout, safe-area fit, or touch-target
+usability has been performed for this phase. The board graph itself is not
+mirrored.
 
 ## Run tests
 
 ### Unity
 
-Open **Window > General > Test Runner** and run Edit Mode, then Play Mode.
-The Editor Play Mode suite loads the real tutorial scene and covers the full
-solution, wrong routing and recovery, unavailable/terminal commands, animation
-lockout, undo/restart, scene reloads, isolated persistence, and Hebrew/reduced
-motion settings. Presentation regressions check conveyor endpoints under
-scaled/translated viewports, 9:16 coverage, and asymmetric Safe Area geometry.
-These are not screenshot or physical-touch tests. Close other Editor instances
-using this project before running command-line tests. The scene tests are
-Editor-only; they are not an on-device player test suite.
+Open **Window > General > Test Runner** and run Edit Mode, then Play Mode. The
+Edit Mode suites cover simulation/domain/service behavior and the packaged
+font glyphs. The Play Mode suite loads the real scene and covers the tutorial
+solution/failure, animation lockout, undo/restart, local progression,
+statistics, scene reloads, and language/motion settings. They do not prove
+visual correctness or physical touch behavior. Close other Editor instances
+using this project before running command-line tests. Scene tests are
+Editor-only, not an on-device player suite.
 
 Command-line alternatives (substitute your actual Editor path):
 
@@ -249,8 +242,9 @@ With .NET SDK 8 installed:
 dotnet test Tools/DomainChecks/DomainChecks.csproj
 ```
 
-This compiles Core/Services with C# 9 and runs all 61 shared tests against copied
-JSON resources. It does **not** compile Runtime or execute the Play Mode test.
+This compiles Core/Services with C# 9 and runs the shared domain/service tests
+against copied JSON resources. It does **not** compile Runtime, test the TMP
+asset, or execute the Play Mode suite.
 The first run restores NUnit and the test runner; these dependencies are only
 for this standalone development harness, not the game.
 
@@ -263,7 +257,8 @@ and locale parity/required keys/RTL line ordering.
 ## macOS validation player
 
 The following produces a development player without publishing or configuring
-production signing:
+production signing. The current Phase 2 player build succeeded; it has not been
+manually launched or visually reviewed.
 
 ```sh
 "$UNITY" -batchmode -nographics -projectPath "$PWD" \
@@ -281,8 +276,8 @@ is not a game backend; local saves do not require a network.
 ## iOS build gate and instructions
 
 1. In Unity Hub, choose **Installs > 6000.0.62f1 > Add modules > iOS Build
-   Support**. It was not installed during this phase; the user chose to continue
-   macOS validation without it.
+   Support**. This module is absent from the current Editor installation and
+   was not installed during Phase 2.
 2. Open **File > Build Profiles**, select iOS, and switch the active platform.
    Ensure the tutorial scene remains enabled in the scene list.
 3. Use a development bundle identifier you control; choose portrait orientation
@@ -310,7 +305,37 @@ compile-only command, signing, deployment, and device checks above have **not**
 been executed. Do not publish, archive for distribution, or configure
 production signing as part of this phase.
 
-## Phase 1.1 validation record — 2026-11-08
+## Phase 2 validation record — 2026-11-08
+
+Environment: macOS 27.0.1, Apple M1 Pro/arm64; Unity Hub 3.22.6; Unity
+6000.0.62f1 (f99f05b3e950); .NET SDK 8 installed at the user's request for
+testing; Xcode 27.1 with iOS 27.1 SDK. Unity Test Framework 1.6.0.
+
+| Suite/check | Total | Passed | Failed | Skipped | Environment/evidence |
+|---|---:|---:|---:|---:|---|
+| Shared .NET regressions | 67 | 67 | 0 | 0 | .NET 8, `Tools/DomainChecks/TestResults/phase2-dotnet.trx` |
+| Unity Edit Mode | 68 | 68 | 0 | 0 | Configured Editor, batch/null graphics, domain/services and static-font checks |
+| Unity Play Mode | 11 | 11 | 0 | 0 | Configured Editor, batch/null graphics, scene and control/persistence integration |
+| Tutorial/build-scene validation | — | Pass | — | — | Editor validation: enabled scene, camera/controller, components, tutorial data |
+| macOS development player build | — | Pass | — | — | `Builds/macOS/PulseFactory.app`; not manually launched or visually reviewed |
+| iOS export/Xcode/device | — | Not run | — | — | Unity iOS Build Support absent; no project export or device test |
+| Human/visual playtest | — | Not run | — | — | No enjoyment, visual-correctness, or touch-usability claim |
+
+Automated solver and replay tests verify all eight catalogued solutions and
+shortest solution lengths. Play Mode verifies the tutorial's four-command win,
+an incorrect-route failure, command lockout, undo/restart, and progression into
+Level 2. The tests run without a rendered visual review; they do not prove
+that the interface is attractive, comfortably readable, fun, or usable by
+touch. The local playtest data schema and corruption recovery are covered by
+the shared service tests.
+
+The static font and TMP essential resources are included in the project; the
+font's source file and SIL Open Font License are retained under `Assets/Fonts`.
+No iOS settings, production signing, publishing, or backend services were
+configured. The macOS player was built only; its runtime appearance and manual
+launch remain open checks.
+
+## Historical Phase 1.1 validation record — 2026-11-08
 
 Environment: macOS 27.0.1 (26A434), Apple M1 Pro/arm64; Unity Hub 3.22.6;
 Unity 6000.0.62f1 (f99f05b3e950), Metal; .NET SDK 8.0.427/runtime 8.0.33;
