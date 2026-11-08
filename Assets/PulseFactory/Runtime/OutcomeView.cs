@@ -10,8 +10,10 @@ namespace PulseFactory.Presentation
     public sealed class OutcomeView : MonoBehaviour
     {
         private RectTransform root;
+        private RectTransform cardTransform;
         private TMP_Text title;
         private TMP_Text message;
+        private readonly Image[] starImages = new Image[3];
         private Button retry;
         private Button next;
         private Button levels;
@@ -22,6 +24,8 @@ namespace PulseFactory.Presentation
         private bool hasOutcome;
         private int stars;
         private string failureKey;
+        private bool animateIn;
+        private bool reducedMotion;
 
         public void Build(RectTransform parent, TMP_FontAsset fontAsset, Action onRetry,
             Action onNext, Action onLevels)
@@ -34,33 +38,52 @@ namespace PulseFactory.Presentation
             shade.raycastTarget = true;
             UIFactory.Stretch((RectTransform)shade.transform);
             var card = UIFactory.Image("Outcome card", root, UIFactory.Panel, true);
-            var cardRect = (RectTransform)card.transform;
+            cardTransform = (RectTransform)card.transform;
+            var cardRect = cardTransform;
             cardRect.anchorMin = new Vector2(0.08f, 0.28f);
             cardRect.anchorMax = new Vector2(0.92f, 0.72f);
             cardRect.offsetMin = cardRect.offsetMax = Vector2.zero;
             UIFactory.Shadow(card, new Color(0, 0, 0, 0.6f), new Vector2(0, -1), 8);
+            var accent = UIFactory.Image("Outcome accent", card.transform, UIFactory.Mint, true);
+            var accentRect = (RectTransform)accent.transform;
+            accentRect.anchorMin = new Vector2(0.06f, 0.955f);
+            accentRect.anchorMax = new Vector2(0.94f, 0.975f);
+            accentRect.offsetMin = accentRect.offsetMax = Vector2.zero;
 
             title = UIFactory.Text("Outcome title", card.transform, font, "", 25,
                 UIFactory.White, TextAlignmentOptions.Center, false, true);
-            title.rectTransform.anchorMin = new Vector2(0.07f, 0.67f);
-            title.rectTransform.anchorMax = new Vector2(0.93f, 0.92f);
+            title.rectTransform.anchorMin = new Vector2(0.07f, 0.76f);
+            title.rectTransform.anchorMax = new Vector2(0.93f, 0.94f);
             title.rectTransform.offsetMin = title.rectTransform.offsetMax = Vector2.zero;
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 18;
+            title.fontSizeMax = 25;
+            for (int i = 0; i < starImages.Length; i++)
+            {
+                starImages[i] = UIFactory.Star("Outcome star " + (i + 1), card.transform,
+                    new Color(0.33f, 0.4f, 0.49f));
+                var starRect = (RectTransform)starImages[i].transform;
+                starRect.anchorMin = starRect.anchorMax = new Vector2(0.38f + i * 0.12f, 0.66f);
+                starRect.sizeDelta = new Vector2(26, 26);
+                starRect.anchoredPosition = Vector2.zero;
+            }
             message = UIFactory.Text("Outcome message", card.transform, font, "", 15,
                 UIFactory.Muted, TextAlignmentOptions.Center, false, true);
-            message.rectTransform.anchorMin = new Vector2(0.08f, 0.4f);
-            message.rectTransform.anchorMax = new Vector2(0.92f, 0.68f);
+            message.rectTransform.anchorMin = new Vector2(0.08f, 0.37f);
+            message.rectTransform.anchorMax = new Vector2(0.92f, 0.61f);
             message.rectTransform.offsetMin = message.rectTransform.offsetMax = Vector2.zero;
             message.enableAutoSizing = true;
             message.fontSizeMin = 12;
             message.fontSizeMax = 15;
 
-            retry = MakeButton(card.transform, "Retry", 0.08f, 0.34f, () => onRetry());
-            next = MakeButton(card.transform, "Next level", 0.38f, 0.65f, () => onNext());
-            levels = MakeButton(card.transform, "Levels", 0.69f, 0.92f, () => onLevels());
+            retry = MakeButton(card.transform, "Retry", () => onRetry(), new Color(0.15f, 0.27f, 0.34f));
+            next = MakeButton(card.transform, "Next level", () => onNext(), new Color(0.12f, 0.39f, 0.33f));
+            levels = MakeButton(card.transform, "Levels", () => onLevels(), UIFactory.Raised);
             root.gameObject.SetActive(false);
         }
 
-        public void ShowVictory(int achievedStars, bool isFinalLevel, bool canAdvance, LocalizationCatalog text)
+        public void ShowVictory(int achievedStars, bool isFinalLevel, bool canAdvance, LocalizationCatalog text,
+            bool animate)
         {
             hasOutcome = true;
             victory = true;
@@ -69,18 +92,31 @@ namespace PulseFactory.Presentation
             stars = achievedStars;
             Refresh(text);
             root.gameObject.SetActive(true);
+            BeginIntro(animate);
         }
 
-        public void ShowFailure(string key, LocalizationCatalog text)
+        public void ShowFailure(string key, LocalizationCatalog text, bool animate)
         {
             hasOutcome = true;
             victory = false;
             failureKey = key;
             Refresh(text);
             root.gameObject.SetActive(true);
+            BeginIntro(animate);
         }
 
-        public void Hide() => root.gameObject.SetActive(false);
+        public void Hide()
+        {
+            animateIn = false;
+            root.gameObject.SetActive(false);
+        }
+
+        public void SetReducedMotion(bool value)
+        {
+            reducedMotion = value;
+            foreach (var button in new[] { retry, next, levels })
+                button.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!value);
+        }
 
         public void Refresh(LocalizationCatalog text)
         {
@@ -94,16 +130,62 @@ namespace PulseFactory.Presentation
             next.gameObject.SetActive(victory && nextAvailable);
             retry.gameObject.SetActive(true);
             next.interactable = victory && nextAvailable;
+            foreach (var button in new[] { retry, next, levels })
+                button.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            SetActionAnchors(victory && nextAvailable);
+            for (int i = 0; i < starImages.Length; i++)
+            {
+                starImages[i].gameObject.SetActive(victory);
+                starImages[i].color = i < stars ? UIFactory.Amber : new Color(0.33f, 0.4f, 0.49f, 0.55f);
+            }
+            var accentImage = cardTransform.Find("Outcome accent").GetComponent<Image>();
+            accentImage.color = victory ? UIFactory.Mint : UIFactory.Amber;
         }
 
-        private Button MakeButton(Transform parent, string name, float left, float right, UnityEngine.Events.UnityAction action)
+        private Button MakeButton(Transform parent, string name, UnityEngine.Events.UnityAction action, Color color)
         {
-            var button = UIFactory.Button(name, parent, font, "", 12, UIFactory.Raised, false, action);
+            return UIFactory.Button(name, parent, font, "", 13, color, false, action);
+        }
+
+        private void SetActionAnchors(bool hasNext)
+        {
+            if (hasNext)
+            {
+                SetAnchors(next, 0.09f, 0.29f, 0.52f, 0.92f);
+                SetAnchors(retry, 0.09f, 0.29f, 0.08f, 0.48f);
+                SetAnchors(levels, 0.015f, 0.1f, 0.26f, 0.74f);
+            }
+            else
+            {
+                SetAnchors(retry, 0.09f, 0.29f, 0.08f, 0.92f);
+                SetAnchors(levels, 0.015f, 0.1f, 0.26f, 0.74f);
+            }
+        }
+
+        private static void SetAnchors(Button button, float bottom, float top, float left, float right)
+        {
             var rect = (RectTransform)button.transform;
-            rect.anchorMin = new Vector2(left, 0.09f);
-            rect.anchorMax = new Vector2(right, 0.34f);
+            rect.anchorMin = new Vector2(left, bottom);
+            rect.anchorMax = new Vector2(right, top);
             rect.offsetMin = rect.offsetMax = Vector2.zero;
-            return button;
+        }
+
+        private void BeginIntro(bool animate)
+        {
+            cardTransform.localScale = animate ? Vector3.one * 0.92f : Vector3.one;
+            animateIn = animate;
+        }
+
+        private void Update()
+        {
+            if (!animateIn) return;
+            cardTransform.localScale = Vector3.Lerp(cardTransform.localScale, Vector3.one,
+                1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+            if ((cardTransform.localScale - Vector3.one).sqrMagnitude < 0.0001f)
+            {
+                cardTransform.localScale = Vector3.one;
+                animateIn = false;
+            }
         }
 
         private static void SetButton(Button button, string value, bool rtl)
@@ -111,7 +193,7 @@ namespace PulseFactory.Presentation
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
             label.isRightToLeftText = rtl;
-            label.fontSize = value.Length > 18 ? 9 : 12;
+            label.fontSize = value.Length > 14 ? 11 : 14;
         }
     }
 }

@@ -1,24 +1,38 @@
-# PULSE FACTORY — Phase 2: Proof of Fun Prototype
+# PULSE FACTORY — Phase 3: UX/UI Polish Vertical Slice
 
 A deterministic, turn-based conveyor-puzzle vertical slice with eight authored
 levels, local progression, anonymous aggregate playtest statistics, and
-English/Hebrew UI. This is a prototype foundation, not a claim that the game
-has been user-tested for fun or visual polish.
+English/Hebrew UI. Phase 3 polishes the retained level-selection and gameplay
+screens without changing simulation or progression semantics.
 
 ## Status
 
 Unity 6000.0.62f1 imports and compiles the project. The retained uGUI/TextMeshPro
-interface and the static, OFL-licensed bilingual font asset are in place. Unity
-Edit Mode tests pass **68/68** and Play Mode tests pass **11/11**; see the
-Phase 2 validation record below. The macOS development player was built
-successfully, but was not manually launched or visually reviewed. Human
-playtesting, enjoyment, touch usability, and Hebrew layout quality remain
-unverified.
+interface now has a stronger level-card hierarchy, a larger board, clearer
+package/route/switch indicators, touch-sized command controls, and terminal
+feedback. The Phase 3 regression results and portrait 540×960 Unity test-player
+screenshots are recorded below. They confirm rendered UI and the tested
+gameplay paths; they are not an iPhone/device test or a claim of commercial
+readiness. Hebrew support remains basic RTL text handling, not full bidi.
 
 **iOS is an open gate:** this Editor has no iOS Build Support module. No Xcode
 project was generated, no iOS build was executed, and no device was tested.
 There are no backend, accounts, ads, purchases, multiplayer, or network
 dependencies.
+
+## Phase 3 screenshots
+
+Captured from the Unity macOS test player at 540×960 portrait resolution.
+The Unity **Development Build** watermark is from the test player.
+
+| Screen | Screenshot |
+|---|---|
+| Level selection | [01-level-selection.png](Artifacts/Phase3Screenshots/01-level-selection.png) |
+| Level 1 gameplay, Hebrew | [02-gameplay-hebrew.png](Artifacts/Phase3Screenshots/02-gameplay-hebrew.png) |
+| Level 1 gameplay, English | [03-gameplay-english.png](Artifacts/Phase3Screenshots/03-gameplay-english.png) |
+| Level 1 victory | [04-victory.png](Artifacts/Phase3Screenshots/04-victory.png) |
+| Level 2 gameplay | [05-gameplay-level-two.png](Artifacts/Phase3Screenshots/05-gameplay-level-two.png) |
+| Progressed level selection | [06-level-selection-progress.png](Artifacts/Phase3Screenshots/06-level-selection-progress.png) |
 
 ## Open and play
 
@@ -60,9 +74,10 @@ Each accepted command advances exactly one logical beat. Pulses toggle their
 group **before** movement. Input is locked while packages animate; reduced
 motion skips movement animation without changing the simulation. The prototype
 requests portrait orientation and anchors its interface to the device safe
-area. No signing credentials or shipping player settings are included. Actual
-mouse/touch handling, device safe-area fit, and visual appearance still require
-human verification. See the separate iOS build instructions below.
+area. No signing credentials or shipping player settings are included. Portrait
+test-player screenshots were visually reviewed, but physical touch, device
+safe-area behavior, and hardware-specific scaling remain unverified. See the
+separate iOS build instructions below.
 
 ## Structure and dependencies
 
@@ -163,8 +178,9 @@ explicitly supports **red and blue** only. New visual kinds require palette and
 symbol/localization entries, not simulation changes. The UI currently shows
 tutorial-specific instructions; replace those resource strings for other
 content. A level selection/catalog screen is not part of this phase.
-Validation checks structural correctness, not puzzle solvability or visual
-layout quality.
+This level-authoring validation checks structural correctness, not puzzle
+solvability. The existing catalog and gameplay screens are polished in Phase 3;
+see the screenshot and validation records below.
 
 ## Persistence
 
@@ -180,9 +196,9 @@ in-memory progress without deleting the original; the next successful save
 backs it up. Failed writes are reported, not treated as successful persistence.
 Backups are not automatically loaded or migrated. Storage is single-process.
 Batch-mode gameplay uses a separate `progress-batch.json`. Editor Play Mode
-tests additionally use a unique temporary save path per test, including when
-run interactively, and remove only their own temporary data. The test override
-is compiled only in the Editor. Tests never read or overwrite player progress.
+tests use a unique temporary save path per test and remove only their own
+temporary data. The test override is compiled only for Editor/test builds.
+Tests never read or overwrite ordinary player progress.
 
 The default generated company/product settings currently place macOS saves at
 `~/Library/Application Support/DefaultCompany/PULSE-FACTORY/progress.json`.
@@ -204,9 +220,9 @@ unpointed Hebrew translations. A static SDF font is generated from Noto Sans
 Hebrew; its source and SIL Open Font License are retained under
 [`Assets/Fonts`](Assets/Fonts). This is basic Hebrew rendering, **not** a full
 Unicode bidi engine, Arabic shaper, or comprehensive mixed-direction text
-solution. No visual review of Hebrew layout, safe-area fit, or touch-target
-usability has been performed for this phase. The board graph itself is not
-mirrored.
+solution. Hebrew layout was reviewed in the portrait test-player screenshot;
+mixed-direction edge cases, device safe-area fit, and physical touch-target
+usability remain unverified. The board graph itself is not mirrored.
 
 ## Run tests
 
@@ -216,10 +232,10 @@ Open **Window > General > Test Runner** and run Edit Mode, then Play Mode. The
 Edit Mode suites cover simulation/domain/service behavior and the packaged
 font glyphs. The Play Mode suite loads the real scene and covers the tutorial
 solution/failure, animation lockout, undo/restart, local progression,
-statistics, scene reloads, and language/motion settings. They do not prove
-visual correctness or physical touch behavior. Close other Editor instances
-using this project before running command-line tests. Scene tests are
-Editor-only, not an on-device player suite.
+statistics, scene reloads, language/motion settings, and rendered layout
+anchors. They do not prove physical touch behavior. Close other Editor
+instances using this project before running command-line tests. Scene tests
+are not an on-device player suite.
 
 Command-line alternatives (substitute your actual Editor path):
 
@@ -233,6 +249,21 @@ mkdir -p TestResults
   -testPlatform PlayMode -testResults "$PWD/TestResults/playmode.xml" \
   -logFile "$PWD/TestResults/playmode.log"
 ```
+
+The portrait screenshot flow can be captured in a macOS test player:
+
+```sh
+mkdir -p Artifacts/Phase3Screenshots
+PULSE_FACTORY_SCREENSHOTS="$PWD/Artifacts/Phase3Screenshots" "$UNITY" \
+  -batchmode -projectPath "$PWD" -runTests -testPlatform StandaloneOSX \
+  -testFilter PhaseThreeScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo \
+  -testResults "$PWD/TestResults/phase3-visual.xml" \
+  -logFile "$PWD/TestResults/phase3-visual.log"
+```
+
+This builds/runs a Unity development test player and adds its watermark to
+screenshots. It validates rendered portrait screens and scripted test paths,
+not a shipping build, physical device, or manual touch interaction.
 
 ### Without Unity
 
@@ -308,32 +339,35 @@ production signing as part of this phase.
 ## Phase 2 validation record — 2026-11-08
 
 Environment: macOS 27.0.1, Apple M1 Pro/arm64; Unity Hub 3.22.6; Unity
-6000.0.62f1 (f99f05b3e950); .NET SDK 8 installed at the user's request for
-testing; Xcode 27.1 with iOS 27.1 SDK. Unity Test Framework 1.6.0.
+6000.0.62f1 (f99f05b3e950); .NET SDK 8.0.427; Xcode 27.1 with iOS 27.1 SDK.
+Unity Test Framework 1.6.0.
 
 | Suite/check | Total | Passed | Failed | Skipped | Environment/evidence |
 |---|---:|---:|---:|---:|---|
-| Shared .NET regressions | 67 | 67 | 0 | 0 | .NET 8, `Tools/DomainChecks/TestResults/phase2-dotnet.trx` |
-| Unity Edit Mode | 68 | 68 | 0 | 0 | Configured Editor, batch/null graphics, domain/services and static-font checks |
-| Unity Play Mode | 11 | 11 | 0 | 0 | Configured Editor, batch/null graphics, scene and control/persistence integration |
+| Shared .NET regressions | 67 | 67 | 0 | 0 | .NET 8.0.427, Phase 3 final regression run |
+| Unity Edit Mode | 68 | 68 | 0 | 0 | Unity 6000.0.62f1, batch/null graphics |
+| Unity Play Mode | 12 | 12 | 0 | 0 | Unity 6000.0.62f1, batch mode; scene, controls, persistence, and level flows |
+| Portrait screenshot flow | 1 | 1 | 0 | 0 | StandaloneOSX Unity test player; captures all six 540×960 screenshots |
 | Tutorial/build-scene validation | — | Pass | — | — | Editor validation: enabled scene, camera/controller, components, tutorial data |
-| macOS development player build | — | Pass | — | — | `Builds/macOS/PulseFactory.app`; not manually launched or visually reviewed |
+| Screenshot review | — | Pass | — | — | Level selection, Hebrew/English gameplay, victory, progress, and Level 2 captures visually reviewed |
 | iOS export/Xcode/device | — | Not run | — | — | Unity iOS Build Support absent; no project export or device test |
-| Human/visual playtest | — | Not run | — | — | No enjoyment, visual-correctness, or touch-usability claim |
 
 Automated solver and replay tests verify all eight catalogued solutions and
 shortest solution lengths. Play Mode verifies the tutorial's four-command win,
 an incorrect-route failure, command lockout, undo/restart, and progression into
-Level 2. The tests run without a rendered visual review; they do not prove
-that the interface is attractive, comfortably readable, fun, or usable by
-touch. The local playtest data schema and corruption recovery are covered by
-the shared service tests.
+Level 2's authored `PULSE A`, `MOVE` solution. The separate StandaloneOSX
+flow test captures rendered screens; the screenshots were visually reviewed.
+These checks do not prove enjoyment or physical touch usability. The local
+playtest data schema and corruption recovery are covered by the shared service
+tests.
 
 The static font and TMP essential resources are included in the project; the
 font's source file and SIL Open Font License are retained under `Assets/Fonts`.
 No iOS settings, production signing, publishing, or backend services were
-configured. The macOS player was built only; its runtime appearance and manual
-launch remain open checks.
+configured. The screenshots come from a Unity development test player and carry
+its watermark; they are not a shipping build or device test. Physical touch,
+device safe-area behavior, hardware-specific scaling, and full bidirectional
+text layout remain open checks.
 
 ## Historical Phase 1.1 validation record — 2026-11-08
 

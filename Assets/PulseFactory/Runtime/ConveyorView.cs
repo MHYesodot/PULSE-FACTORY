@@ -40,17 +40,18 @@ namespace PulseFactory.Presentation
             markers = new Image[5];
             for (int i = 0; i < markers.Length; i++)
             {
-                markers[i] = UIFactory.Image("Belt cleat", root, UIFactory.Muted, true);
+                markers[i] = UIFactory.Image("Belt roller", root, UIFactory.Muted, true);
                 var markerRect = (RectTransform)markers[i].transform;
                 markerRect.anchorMin = markerRect.anchorMax = new Vector2((i + 1f) / (markers.Length + 1), 0.5f);
-                markerRect.sizeDelta = new Vector2(3, 10);
+                markerRect.sizeDelta = new Vector2(7, 7);
                 markerRect.anchoredPosition = Vector2.zero;
+                markerRect.localRotation = Quaternion.Euler(0, 0, 45);
             }
-            arrow = UIFactory.Text("Direction", root, font, ">", 25, UIFactory.Mint,
+            arrow = UIFactory.Text("Direction", root, font, ">", 27, UIFactory.Mint,
                 TextAlignmentOptions.Center, rtl, true);
             var arrowRect = arrow.rectTransform;
             arrowRect.anchorMin = arrowRect.anchorMax = new Vector2(0.78f, 0.5f);
-            arrowRect.sizeDelta = new Vector2(30, 32);
+            arrowRect.sizeDelta = new Vector2(30, 34);
             arrowRect.anchoredPosition = Vector2.zero;
         }
 

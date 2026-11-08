@@ -23,12 +23,11 @@ namespace PulseFactory.Presentation
         private CommandControlsView controls;
         private BoardView board;
         private OutcomeView outcome;
-        private TMP_Text menuTitle;
-        private TMP_Text menuSubtitle;
         private Button menuLanguage;
         private Button gameLanguage;
         private SaveData menuSave = new SaveData();
         private bool menuReducedMotion;
+        private bool gameplayReducedMotion;
         private string exportResultKey = "statsDisclaimer";
 
         public Canvas Canvas => canvas;
@@ -58,7 +57,7 @@ namespace PulseFactory.Presentation
             scaler.matchWidthOrHeight = 0.5f;
             gameObject.AddComponent<GraphicRaycaster>();
             UIFactory.EnsureEventSystem();
-            var background = UIFactory.Image("Factory background", transform, UIFactory.Ink);
+            var background = UIFactory.Background("Factory background", transform);
             UIFactory.Stretch((RectTransform)background.transform);
             safeRoot = UIFactory.Rect("Safe area", transform, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
@@ -98,14 +97,19 @@ namespace PulseFactory.Presentation
             menuReducedMotion = reducedMotion;
             this.exportResultKey = exportResultKey;
             levelSelection.Refresh(text, save, reducedMotion, exportResultKey);
+            menuLanguage.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
         }
 
         public void UpdateGameplay(LevelCatalogEntry entry, LevelDefinition level, SimulationEngine engine,
             SimulationState state, int bestStars, bool canUndo, bool animating, bool reducedMotion,
             string feedbackKey, object[] feedbackArgs)
         {
+            gameplayReducedMotion = reducedMotion;
+            board.SetReducedMotion(reducedMotion);
             hud.Refresh(entry, level, state, text, feedbackKey, feedbackArgs, animating);
             controls.Refresh(text, engine, state, canUndo, animating, reducedMotion);
+            gameLanguage.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            outcome.SetReducedMotion(reducedMotion);
         }
 
         public void UpdateLocale(LocalizationCatalog localization)
@@ -117,23 +121,13 @@ namespace PulseFactory.Presentation
         public void SetExportResult(string key) => levelSelection.RefreshExportStatus(text, key);
 
         public void ShowVictory(int stars, bool finalLevel, bool canAdvance) =>
-            outcome.ShowVictory(stars, finalLevel, canAdvance, text);
+            outcome.ShowVictory(stars, finalLevel, canAdvance, text, !gameplayReducedMotion);
 
-        public void ShowFailure(string key) => outcome.ShowFailure(key, text);
+        public void ShowFailure(string key) => outcome.ShowFailure(key, text, !gameplayReducedMotion);
 
         private void BuildMenu(RectTransform parent, LevelCatalog levelCatalog, IReadOnlyList<LevelDefinition> levels,
             Action<int> onSelectLevel, Action onExport, Action onMotion)
         {
-            menuTitle = UIFactory.Text("Factory title", parent, font, "", 28, UIFactory.White,
-                TextAlignmentOptions.Center, false, true);
-            menuTitle.rectTransform.anchorMin = new Vector2(0.05f, 0.86f);
-            menuTitle.rectTransform.anchorMax = new Vector2(0.7f, 0.96f);
-            menuTitle.rectTransform.offsetMin = menuTitle.rectTransform.offsetMax = Vector2.zero;
-            menuSubtitle = UIFactory.Text("Factory subtitle", parent, font, "", 11, UIFactory.Muted,
-                TextAlignmentOptions.Center, false, true);
-            menuSubtitle.rectTransform.anchorMin = new Vector2(0.05f, 0.82f);
-            menuSubtitle.rectTransform.anchorMax = new Vector2(0.95f, 0.87f);
-            menuSubtitle.rectTransform.offsetMin = menuSubtitle.rectTransform.offsetMax = Vector2.zero;
             var holder = new GameObject("Level selector view", typeof(RectTransform));
             holder.transform.SetParent(parent, false);
             levelSelection = holder.AddComponent<LevelSelectionView>();
@@ -145,12 +139,17 @@ namespace PulseFactory.Presentation
             Action onMotion, Action onNext, Action onRetry)
         {
             var boardFrame = UIFactory.Image("Board frame", parent, UIFactory.Panel, true);
+            UIFactory.Shadow(boardFrame, new Color(0, 0, 0, 0.35f), new Vector2(0, -2), 8);
             var frameRect = (RectTransform)boardFrame.transform;
-            frameRect.anchorMin = new Vector2(0.045f, 0.43f);
-            frameRect.anchorMax = new Vector2(0.955f, 0.655f);
+            frameRect.anchorMin = new Vector2(0.035f, 0.305f);
+            frameRect.anchorMax = new Vector2(0.965f, 0.69f);
             frameRect.offsetMin = frameRect.offsetMax = Vector2.zero;
+            var boardViewport = UIFactory.Rect("Board viewport", frameRect, Vector2.zero, Vector2.one,
+                new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            boardViewport.offsetMin = new Vector2(10, 10);
+            boardViewport.offsetMax = new Vector2(-10, -10);
             board = boardFrame.gameObject.AddComponent<BoardView>();
-            board.Build(frameRect, font, text);
+            board.Build(boardViewport, font, text);
 
             var hudHolder = new GameObject("Gameplay HUD view", typeof(RectTransform));
             hudHolder.transform.SetParent(parent, false);
@@ -160,7 +159,7 @@ namespace PulseFactory.Presentation
             var controlsHolder = new GameObject("Command controls view", typeof(RectTransform));
             controlsHolder.transform.SetParent(parent, false);
             controls = controlsHolder.AddComponent<CommandControlsView>();
-            controls.Build(parent, font, onCommand, onUndo, onRestart, onLevels, onMotion);
+            controls.Build(parent, font, onCommand, onUndo, onRestart, onLevels, onMotion, text.RightToLeft);
 
             outcome = gameObject.AddComponent<OutcomeView>();
             outcome.Build(parent, font, onRetry, onNext, onLevels);
@@ -171,7 +170,7 @@ namespace PulseFactory.Presentation
             var button = UIFactory.Button("Language", page, font, "", 9, UIFactory.Raised,
                 false, () => onLanguage());
             var rect = (RectTransform)button.transform;
-            rect.anchorMin = new Vector2(0.73f, 0.955f);
+            rect.anchorMin = new Vector2(0.76f, 0.95f);
             rect.anchorMax = new Vector2(0.97f, 0.995f);
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             return button;
@@ -187,23 +186,21 @@ namespace PulseFactory.Presentation
 
         private void RefreshLocale()
         {
-            menuTitle.text = text.Text("title");
-            menuSubtitle.text = text.Text("menuSubtitle");
-            menuTitle.isRightToLeftText = menuSubtitle.isRightToLeftText = text.RightToLeft;
             var language = text.Locale == "en" ? "languageHebrew" : "languageEnglish";
-            SetLanguageButton(menuLanguage, text.Text(language), text.RightToLeft);
-            SetLanguageButton(gameLanguage, text.Text(language), text.RightToLeft);
+            SetLanguageButton(menuLanguage, text.Text(language), text.Locale == "en");
+            SetLanguageButton(gameLanguage, text.Text(language), text.Locale == "en");
             levelSelection.Refresh(text, menuSave, menuReducedMotion, exportResultKey);
             board.SetLocalization(text);
             hud.SetLocalization(text);
             outcome.Refresh(text);
         }
 
-        private static void SetLanguageButton(Button button, string value, bool rtl)
+        private static void SetLanguageButton(Button button, string value, bool valueIsRightToLeft)
         {
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
-            label.isRightToLeftText = rtl;
+            label.isRightToLeftText = valueIsRightToLeft;
+            label.fontSize = 12;
         }
     }
 }

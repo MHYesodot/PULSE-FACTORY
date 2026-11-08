@@ -25,9 +25,10 @@ namespace PulseFactory.Presentation
         private Action motionAction;
 
         public void Build(RectTransform parent, TMP_FontAsset fontAsset, Action<SimulationCommand> onCommand,
-            Action onUndo, Action onRestart, Action onBack, Action onMotion)
+            Action onUndo, Action onRestart, Action onBack, Action onMotion, bool rightToLeft)
         {
             font = fontAsset;
+            rtl = rightToLeft;
             commandAction = onCommand;
             undoAction = onUndo;
             restartAction = onRestart;
@@ -42,20 +43,22 @@ namespace PulseFactory.Presentation
             {
                 var command = commandValues[i];
                 var button = UIFactory.Button("Command " + command, root, font, "", 17,
-                    i == 0 ? new Color(0.12f, 0.35f, 0.32f) : new Color(0.19f, 0.17f, 0.34f),
+                    i == 0 ? new Color(0.12f, 0.38f, 0.34f)
+                        : i == 1 ? new Color(0.28f, 0.22f, 0.46f) : new Color(0.15f, 0.28f, 0.44f),
                     rtl, () => commandAction(command));
                 var rect = (RectTransform)button.transform;
-                float left = 0.04f + i * 0.31f;
-                rect.anchorMin = new Vector2(left, 0.13f);
-                rect.anchorMax = new Vector2(left + 0.28f, 0.21f);
+                int visualIndex = rtl ? commandValues.Length - 1 - i : i;
+                float left = 0.035f + visualIndex * 0.315f;
+                rect.anchorMin = new Vector2(left, 0.145f);
+                rect.anchorMax = new Vector2(left + 0.29f, 0.255f);
                 rect.offsetMin = rect.offsetMax = Vector2.zero;
                 commands.Add(command, button);
             }
 
-            undo = AddUtilityButton(root, "Undo", 0.04f, 0.46f, () => undoAction());
-            restart = AddUtilityButton(root, "Restart", 0.28f, 0.70f, () => restartAction());
-            back = AddUtilityButton(root, "Levels", 0.52f, 0.94f, () => backAction());
-            motion = AddUtilityButton(root, "Motion", 0.76f, 0.98f, () => motionAction());
+            undo = AddUtilityButton(root, "Undo", 0, () => undoAction());
+            restart = AddUtilityButton(root, "Restart", 1, () => restartAction());
+            back = AddUtilityButton(root, "Levels", 2, () => backAction());
+            motion = AddUtilityButton(root, "Motion", 3, () => motionAction());
         }
 
         public Button CommandButton(SimulationCommand command) => commands[command];
@@ -74,6 +77,7 @@ namespace PulseFactory.Presentation
             {
                 SetButtonText(pair.Value, text.Text(keys[pair.Key]), rtl);
                 pair.Value.interactable = !animating && engine.IsAvailable(state, pair.Key);
+                pair.Value.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
             }
             SetButtonText(undo, text.Text("undo"), rtl);
             SetButtonText(restart, text.Text("restart"), rtl);
@@ -83,14 +87,21 @@ namespace PulseFactory.Presentation
             restart.interactable = !animating;
             back.interactable = !animating;
             motion.interactable = !animating;
+            undo.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            restart.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            back.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            motion.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
         }
 
-        private Button AddUtilityButton(Transform parent, string name, float left, float right, UnityEngine.Events.UnityAction action)
+        private Button AddUtilityButton(Transform parent, string name, int order, UnityEngine.Events.UnityAction action)
         {
-            var button = UIFactory.Button(name, parent, font, "", 11, UIFactory.Raised, rtl, action);
+            var button = UIFactory.Button(name, parent, font, "", 12,
+                order == 0 ? new Color(0.13f, 0.18f, 0.25f) : UIFactory.Raised, rtl, action);
             var rect = (RectTransform)button.transform;
-            rect.anchorMin = new Vector2(left, 0.035f);
-            rect.anchorMax = new Vector2(right, 0.11f);
+            int visualOrder = rtl ? 3 - order : order;
+            float left = 0.025f + visualOrder * 0.2425f;
+            rect.anchorMin = new Vector2(left, 0.025f);
+            rect.anchorMax = new Vector2(left + 0.2225f, 0.12f);
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             return button;
         }
@@ -100,7 +111,7 @@ namespace PulseFactory.Presentation
             var text = button.GetComponentInChildren<TMP_Text>();
             text.text = value;
             text.isRightToLeftText = rightToLeft;
-            text.fontSize = value.Length > 16 ? 9 : 11;
+            text.fontSize = value.Length > 16 ? 10 : 13;
         }
     }
 }

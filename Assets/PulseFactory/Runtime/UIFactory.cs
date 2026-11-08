@@ -19,6 +19,18 @@ namespace PulseFactory.UI
         internal static readonly Color Blue = new Color(0.28f, 0.63f, 1f);
         internal static readonly Color Amber = new Color(1f, 0.75f, 0.31f);
         private static Sprite roundedSprite;
+        private static Sprite circleSprite;
+        private static Sprite starSprite;
+        private static Sprite backgroundSprite;
+
+        internal static Sprite RoundedSprite
+        {
+            get
+            {
+                if (roundedSprite == null) roundedSprite = CreateRoundedSprite();
+                return roundedSprite;
+            }
+        }
 
         internal static RectTransform Rect(string name, Transform parent, Vector2 anchorMin,
             Vector2 anchorMax, Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
@@ -43,10 +55,35 @@ namespace PulseFactory.UI
             image.raycastTarget = false;
             if (rounded)
             {
-                if (roundedSprite == null) roundedSprite = CreateRoundedSprite();
-                image.sprite = roundedSprite;
+                image.sprite = RoundedSprite;
                 image.type = UnityEngine.UI.Image.Type.Sliced;
             }
+            return image;
+        }
+
+        internal static Image Circle(string name, Transform parent, Color color)
+        {
+            var image = Image(name, parent, color);
+            if (circleSprite == null) circleSprite = CreateCircleSprite();
+            image.sprite = circleSprite;
+            image.type = UnityEngine.UI.Image.Type.Simple;
+            return image;
+        }
+
+        internal static Image Star(string name, Transform parent, Color color)
+        {
+            var image = Image(name, parent, color);
+            if (starSprite == null) starSprite = CreateStarSprite();
+            image.sprite = starSprite;
+            image.type = UnityEngine.UI.Image.Type.Simple;
+            return image;
+        }
+
+        internal static Image Background(string name, Transform parent)
+        {
+            var image = Image(name, parent, Color.white);
+            if (backgroundSprite == null) backgroundSprite = CreateBackgroundSprite();
+            image.sprite = backgroundSprite;
             return image;
         }
 
@@ -75,6 +112,99 @@ namespace PulseFactory.UI
             var sprite = Sprite.Create(texture, new Rect(0, 0, size, size),
                 new Vector2(0.5f, 0.5f), size, 0, SpriteMeshType.FullRect, new Vector4(10, 10, 10, 10));
             sprite.name = "Runtime UI rounded panel";
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+            return sprite;
+        }
+
+        private static Sprite CreateCircleSprite()
+        {
+            const int size = 64;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false, true)
+            {
+                name = "Runtime UI circle",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(size / 2f, size / 2f));
+                    float alpha = 1f - Mathf.SmoothStep(0, 1, distance - (size / 2f - 1f));
+                    texture.SetPixel(x, y, new Color(1, 1, 1, alpha));
+                }
+            texture.Apply(false, true);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f), size, 0, SpriteMeshType.FullRect);
+            sprite.name = "Runtime UI circle";
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+            return sprite;
+        }
+
+        private static Sprite CreateStarSprite()
+        {
+            const int size = 64;
+            var vertices = new Vector2[10];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                float angle = Mathf.PI * 0.5f + i * Mathf.PI / 5f;
+                float radius = i % 2 == 0 ? 29f : 13f;
+                vertices[i] = new Vector2(size / 2f + Mathf.Cos(angle) * radius,
+                    size / 2f + Mathf.Sin(angle) * radius);
+            }
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false, true)
+            {
+                name = "Runtime UI star",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    int intersections = 0;
+                    var point = new Vector2(x + 0.5f, y + 0.5f);
+                    for (int i = 0, j = vertices.Length - 1; i < vertices.Length; j = i++)
+                    {
+                        var a = vertices[i];
+                        var b = vertices[j];
+                        if ((a.y > point.y) != (b.y > point.y)
+                            && point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x)
+                            intersections++;
+                    }
+                    texture.SetPixel(x, y, new Color(1, 1, 1, intersections % 2 == 1 ? 1 : 0));
+                }
+            texture.Apply(false, true);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f), size, 0, SpriteMeshType.FullRect);
+            sprite.name = "Runtime UI star";
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+            return sprite;
+        }
+
+        private static Sprite CreateBackgroundSprite()
+        {
+            const int width = 4;
+            const int height = 64;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+            {
+                name = "Runtime UI background gradient",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            var top = new Color(0.075f, 0.12f, 0.19f);
+            var bottom = new Color(0.035f, 0.052f, 0.09f);
+            for (int y = 0; y < height; y++)
+            {
+                float t = y / (height - 1f);
+                var color = Color.Lerp(bottom, top, t * t * (3f - 2f * t));
+                for (int x = 0; x < width; x++) texture.SetPixel(x, y, color);
+            }
+            texture.Apply(false, true);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, width, height),
+                new Vector2(0.5f, 0.5f), height, 0, SpriteMeshType.FullRect);
+            sprite.name = "Runtime UI background gradient";
             sprite.hideFlags = HideFlags.HideAndDontSave;
             return sprite;
         }
@@ -118,6 +248,7 @@ namespace PulseFactory.UI
                 fadeDuration = 0.12f
             };
             button.onClick.AddListener(onClick);
+            button.gameObject.AddComponent<ButtonPressFeedback>();
             var label = Text("Label", button.transform, font, text, fontSize, White,
                 TextAlignmentOptions.Center, rtl, true);
             Stretch(label.rectTransform, 12, 4);
@@ -152,6 +283,44 @@ namespace PulseFactory.UI
         {
             color.a = alpha;
             return color;
+        }
+    }
+
+    internal sealed class ButtonPressFeedback : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
+        IPointerExitHandler, ISelectHandler, IDeselectHandler
+    {
+        private Vector3 targetScale = Vector3.one;
+
+        public void OnPointerDown(PointerEventData eventData) => targetScale = Vector3.one * 0.96f;
+        public void OnPointerUp(PointerEventData eventData) => targetScale = Vector3.one;
+        public void OnPointerExit(PointerEventData eventData) => targetScale = Vector3.one;
+        public void OnSelect(BaseEventData eventData) => targetScale = Vector3.one * 1.025f;
+        public void OnDeselect(BaseEventData eventData) => targetScale = Vector3.one;
+
+        private void Update()
+        {
+            if (!motionEnabled || !GetComponent<Button>().interactable) targetScale = Vector3.one;
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, 1f - Mathf.Exp(-24f * Time.unscaledDeltaTime));
+        }
+
+        private bool motionEnabled = true;
+
+        internal void SetMotionEnabled(bool enabled)
+        {
+            motionEnabled = enabled;
+            if (!enabled) targetScale = Vector3.one;
+        }
+
+        private void OnEnable()
+        {
+            targetScale = Vector3.one;
+            transform.localScale = Vector3.one;
+        }
+
+        private void OnDisable()
+        {
+            targetScale = Vector3.one;
+            transform.localScale = Vector3.one;
         }
     }
 }

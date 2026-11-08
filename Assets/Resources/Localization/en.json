@@ -36,7 +36,7 @@
     { "key": "saveWarning", "value": "Save unavailable or reset. Progress may not persist." },
     { "key": "fontWarning", "value": "Hebrew font unavailable. English remains active." },
     { "key": "loadError", "value": "Unable to load the level. See the Unity Console." },
-    { "key": "menuSubtitle", "value": "DETERMINISTIC FACTORY PUZZLES" },
+    { "key": "menuSubtitle", "value": "Plan each move. Master the switches." },
     { "key": "levelSelect", "value": "CHOOSE A ROUTE" },
     { "key": "levelCounter", "value": "LEVEL {0} OF {1}" },
     { "key": "locked", "value": "LOCKED" },

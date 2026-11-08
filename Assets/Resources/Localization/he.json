@@ -36,7 +36,7 @@
     { "key": "saveWarning", "value": "השמירה אינה זמינה או אופסה. ייתכן שההתקדמות לא תישמר." },
     { "key": "fontWarning", "value": "גופן עברי אינו זמין. אנגלית נשארת פעילה." },
     { "key": "loadError", "value": "לא ניתן לטעון את השלב. בדקו את יומן העורך." },
-    { "key": "menuSubtitle", "value": "חידות מפעל דטרמיניסטיות" },
+    { "key": "menuSubtitle", "value": "תכננו כל מהלך. שלטו במתגים." },
     { "key": "levelSelect", "value": "בחרו מסלול" },
     { "key": "levelCounter", "value": "שלב {0} מתוך {1}" },
     { "key": "locked", "value": "נעול" },

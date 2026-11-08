@@ -40,7 +40,7 @@ namespace PulseFactory.UI
         public int CurrentLevelNumber => currentEntry?.Number ?? 0;
         public GameUI UI => ui;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         internal static string TestSavePath { get; set; }
         internal static string TestStatsPath { get; set; }
 #endif
@@ -100,7 +100,7 @@ namespace PulseFactory.UI
             string statsName = Application.isBatchMode ? "playtest-stats-batch.json" : "playtest-stats.json";
             string savePath = Path.Combine(Application.persistentDataPath, saveName);
             string statsPath = Path.Combine(Application.persistentDataPath, statsName);
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
             savePath = TestSavePath ?? savePath;
             statsPath = TestStatsPath ?? statsPath;
 #endif

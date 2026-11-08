@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
 using System;
 using System.Collections;
 using System.IO;
@@ -19,6 +19,7 @@ namespace PulseFactory.Tests
         private string directory;
         private string savePath;
         private string statsPath;
+        private string screenshotDirectory;
 
         [SetUp]
         public void SetUp()
@@ -26,11 +27,12 @@ namespace PulseFactory.Tests
             directory = Path.Combine(Path.GetTempPath(), "pulse-factory-playmode-" + Guid.NewGuid().ToString("N"));
             savePath = Path.Combine(directory, "progress.json");
             statsPath = Path.Combine(directory, "playtest-stats.json");
+            screenshotDirectory = Environment.GetEnvironmentVariable("PULSE_FACTORY_SCREENSHOTS");
+            if (!string.IsNullOrWhiteSpace(screenshotDirectory))
+                Directory.CreateDirectory(screenshotDirectory);
             GameController.TestSavePath = savePath;
             GameController.TestStatsPath = statsPath;
         }
-        #endif
-
         [UnityTearDown]
         public IEnumerator TearDown()
         {
@@ -49,6 +51,20 @@ namespace PulseFactory.Tests
             return controllers[0];
         }
 
+        private static void AssertBoardNodesUseCenteredAnchors(GameController controller)
+        {
+            var board = controller.UI.Board.transform.Find("Board viewport/Factory board");
+            Assert.That(board, Is.Not.Null);
+            foreach (Transform child in board)
+            {
+                if (!child.name.StartsWith("Node ", StringComparison.Ordinal)) continue;
+                var rect = (RectTransform)child;
+                Assert.That(rect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)), child.name);
+                Assert.That(rect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)), child.name);
+            }
+        }
+        #endif
+
         private static IEnumerator Command(GameController controller, SimulationCommand command)
         {
             int previousBeat = controller.Session.State.Beat;
@@ -56,6 +72,22 @@ namespace PulseFactory.Tests
             Assert.That(controller.Session.State.Beat, Is.EqualTo(previousBeat + 1));
             yield return new WaitForSecondsRealtime(0.4f);
             Assert.That(controller.IsAnimating, Is.False);
+        }
+
+        private IEnumerator CaptureReviewScreen(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(screenshotDirectory)) yield break;
+            yield return new WaitForEndOfFrame();
+            var path = Path.Combine(screenshotDirectory, fileName);
+            var screenCapture = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(assembly => assembly.GetType("UnityEngine.ScreenCapture"))
+                .FirstOrDefault(type => type != null);
+            Assert.That(screenCapture, Is.Not.Null, "Unity's screen-capture module is unavailable.");
+            var capture = screenCapture.GetMethod("CaptureScreenshot", new[] { typeof(string), typeof(int) });
+            Assert.That(capture, Is.Not.Null, "Unity screenshot capture API is unavailable.");
+            capture.Invoke(null, new object[] { path, 1 });
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.That(File.Exists(path), Is.True, "Unity did not create screenshot: " + path);
         }
 
         [UnityTest]
@@ -214,6 +246,56 @@ namespace PulseFactory.Tests
             yield return Command(controller, SimulationCommand.Move);
             Assert.That(controller.Session.State.Packages.Single().NodeId, Is.EqualTo("J"));
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator PhaseThreeScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo()
+        {
+            if (!string.IsNullOrWhiteSpace(screenshotDirectory))
+            {
+                Screen.SetResolution(540, 960, FullScreenMode.Windowed);
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+            yield return SceneManager.LoadSceneAsync("Tutorial", LoadSceneMode.Single);
+            var controller = Controller();
+            Assert.That(controller.Session, Is.Null);
+            yield return CaptureReviewScreen("01-level-selection.png");
+
+            Assert.That(controller.SelectLevel(1), Is.True);
+            yield return null;
+            AssertBoardNodesUseCenteredAnchors(controller);
+            controller.ToggleLocale();
+            Assert.That(controller.Locale, Is.EqualTo("he"));
+            yield return CaptureReviewScreen("02-gameplay-hebrew.png");
+
+            controller.ToggleLocale();
+            Assert.That(controller.Locale, Is.EqualTo("en"));
+            yield return CaptureReviewScreen("03-gameplay-english.png");
+
+            yield return Command(controller, SimulationCommand.Move);
+            yield return Command(controller, SimulationCommand.Move);
+            yield return Command(controller, SimulationCommand.Move);
+            yield return Command(controller, SimulationCommand.PulseA);
+            Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
+            Assert.That(controller.Session.State.Beat, Is.EqualTo(4));
+            Assert.That(controller.Session.State.Deliveries.Select(item => item.DestinationId),
+                Is.EqualTo(new[] { "R", "B" }));
+            yield return new WaitForSecondsRealtime(0.25f);
+            yield return CaptureReviewScreen("04-victory.png");
+
+            controller.ReturnToLevelSelect();
+            yield return CaptureReviewScreen("06-level-selection-progress.png");
+            Assert.That(controller.SelectLevel(2), Is.True);
+            Assert.That(controller.CurrentLevelNumber, Is.EqualTo(2));
+            Assert.That(controller.Session.Engine.Level.Id, Is.EqualTo("shared-control"));
+            yield return null;
+            AssertBoardNodesUseCenteredAnchors(controller);
+            yield return CaptureReviewScreen("05-gameplay-level-two.png");
+            yield return Command(controller, SimulationCommand.PulseA);
+            yield return Command(controller, SimulationCommand.Move);
+            Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
+            Assert.That(controller.Session.State.Deliveries.Select(item => item.DestinationId),
+                Is.EquivalentTo(new[] { "R", "B" }));
         }
     }
 }

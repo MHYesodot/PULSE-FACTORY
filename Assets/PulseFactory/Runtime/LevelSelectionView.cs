@@ -14,13 +14,15 @@ namespace PulseFactory.Presentation
     public sealed class LevelSelectionView : MonoBehaviour
     {
         private readonly List<(LevelCatalogEntry Entry, Button Button, TMP_Text Number, TMP_Text Title,
-            TMP_Text Detail)> cards = new List<(LevelCatalogEntry, Button, TMP_Text, TMP_Text, TMP_Text)>();
+            TMP_Text Detail, Image[] Stars, Image Badge)> cards =
+            new List<(LevelCatalogEntry, Button, TMP_Text, TMP_Text, TMP_Text, Image[], Image)>();
         private readonly List<LevelDefinition> definitions = new List<LevelDefinition>();
         private LevelCatalog catalog;
         private TMP_FontAsset font;
         private RectTransform root;
         private TMP_Text title;
         private TMP_Text subtitle;
+        private TMP_Text routeCount;
         private TMP_Text exportStatus;
         private Button exportButton;
         private Button motionButton;
@@ -45,17 +47,28 @@ namespace PulseFactory.Presentation
             root = UIFactory.Rect("Level selection", parent, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(root);
-            title = AddText("Level selection title", 0.85f, 0.95f, 26, UIFactory.White,
+            title = AddText("Factory title", 0.89f, 0.96f, 27, UIFactory.White,
                 TextAlignmentOptions.Center, true);
-            subtitle = AddText("Level selection subtitle", 0.81f, 0.86f, 12, UIFactory.Muted,
+            title.rectTransform.anchorMin = new Vector2(0.04f, 0.89f);
+            title.rectTransform.anchorMax = new Vector2(0.75f, 0.96f);
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 20;
+            title.fontSizeMax = 27;
+            subtitle = AddText("Factory subtitle", 0.84f, 0.89f, 12, UIFactory.Muted,
                 TextAlignmentOptions.Center, false);
+            AddText("Level selection title", 0.765f, 0.81f, 19, UIFactory.Mint,
+                TextAlignmentOptions.MidlineLeft, true).name = "Route heading";
+            routeCount = AddText("Level progress", 0.765f, 0.81f, 12, UIFactory.Muted,
+                TextAlignmentOptions.MidlineRight, true);
 
-            var viewport = UIFactory.Rect("Level list viewport", root, new Vector2(0.06f, 0.19f),
-                new Vector2(0.94f, 0.8f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            var viewport = UIFactory.Rect("Level list viewport", root, new Vector2(0.04f, 0.17f),
+                new Vector2(0.96f, 0.75f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var maskImage = viewport.gameObject.AddComponent<Image>();
-            maskImage.color = new Color(0.055f, 0.08f, 0.12f, 0.35f);
+            maskImage.sprite = UIFactory.RoundedSprite;
+            maskImage.type = Image.Type.Sliced;
+            maskImage.color = new Color(0.07f, 0.1f, 0.15f, 0.92f);
             maskImage.raycastTarget = true;
-            viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            viewport.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             var scroll = viewport.gameObject.AddComponent<ScrollRect>();
             scroll.viewport = viewport;
             scroll.horizontal = false;
@@ -66,8 +79,8 @@ namespace PulseFactory.Presentation
                 new Vector2(1, 1), new Vector2(0.5f, 1), Vector2.zero, Vector2.zero);
             scroll.content = content;
             var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(8, 8, 9, 9);
-            layout.spacing = 7;
+            layout.padding = new RectOffset(8, 8, 10, 10);
+            layout.spacing = 8;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = false;
@@ -79,38 +92,54 @@ namespace PulseFactory.Presentation
             {
                 var button = UIFactory.Button("Level " + entry.Number, content, font, "", 13,
                     new Color(0.1f, 0.15f, 0.21f), false, () => start(entry.Number));
-                var cardRect = (RectTransform)button.transform;
+                UIFactory.Shadow(button.image, new Color(0, 0, 0, 0.25f), new Vector2(0, -1), 3);
                 var element = button.gameObject.AddComponent<LayoutElement>();
-                element.preferredHeight = 69;
-                element.minHeight = 58;
-                var number = UIFactory.Text("Level number", button.transform, font, "", 10,
+                element.preferredHeight = 78;
+                element.minHeight = 68;
+                var badge = UIFactory.Circle("Level number badge", button.transform,
+                    new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.15f));
+                var badgeRect = (RectTransform)badge.transform;
+                badgeRect.anchorMin = new Vector2(0.035f, 0.14f);
+                badgeRect.anchorMax = new Vector2(0.16f, 0.86f);
+                badgeRect.offsetMin = badgeRect.offsetMax = Vector2.zero;
+                var number = UIFactory.Text("Level number", button.transform, font, "", 13,
                     UIFactory.Mint, TextAlignmentOptions.Center, false, true);
                 var numberRect = number.rectTransform;
-                numberRect.anchorMin = new Vector2(0.02f, 0.2f);
-                numberRect.anchorMax = new Vector2(0.18f, 0.8f);
+                numberRect.anchorMin = new Vector2(0.035f, 0.14f);
+                numberRect.anchorMax = new Vector2(0.16f, 0.86f);
                 numberRect.offsetMin = numberRect.offsetMax = Vector2.zero;
                 var name = UIFactory.Text("Level name", button.transform, font, "", 13,
                     UIFactory.White, TextAlignmentOptions.MidlineLeft, false, true);
                 var nameRect = name.rectTransform;
-                nameRect.anchorMin = new Vector2(0.2f, 0.48f);
-                nameRect.anchorMax = new Vector2(0.96f, 0.95f);
+                nameRect.anchorMin = new Vector2(0.19f, 0.47f);
+                nameRect.anchorMax = new Vector2(0.7f, 0.94f);
                 nameRect.offsetMin = nameRect.offsetMax = Vector2.zero;
-                var detail = UIFactory.Text("Level detail", button.transform, font, "", 10,
+                var detail = UIFactory.Text("Level detail", button.transform, font, "", 11,
                     UIFactory.Muted, TextAlignmentOptions.MidlineLeft, false);
                 var detailRect = detail.rectTransform;
-                detailRect.anchorMin = new Vector2(0.2f, 0.05f);
-                detailRect.anchorMax = new Vector2(0.96f, 0.5f);
+                detailRect.anchorMin = new Vector2(0.19f, 0.04f);
+                detailRect.anchorMax = new Vector2(0.96f, 0.48f);
                 detailRect.offsetMin = detailRect.offsetMax = Vector2.zero;
-                cards.Add((entry, button, number, name, detail));
+                var stars = new Image[3];
+                for (int starIndex = 0; starIndex < stars.Length; starIndex++)
+                {
+                    stars[starIndex] = UIFactory.Star("Progress star " + (starIndex + 1), button.transform,
+                        starIndex == 0 ? UIFactory.Amber : new Color(0.33f, 0.4f, 0.49f));
+                    var starRect = (RectTransform)stars[starIndex].transform;
+                    starRect.anchorMin = starRect.anchorMax = new Vector2(0.77f + starIndex * 0.065f, 0.72f);
+                    starRect.sizeDelta = new Vector2(16, 16);
+                    starRect.anchoredPosition = Vector2.zero;
+                }
+                cards.Add((entry, button, number, name, detail, stars, badge));
             }
 
             exportButton = UIFactory.Button("Export playtest data", root, font, "", 10,
                 new Color(0.14f, 0.3f, 0.29f), false, () => export());
-            SetButtonAnchors(exportButton, 0.035f, 0.095f, 0.04f, 0.51f);
+            SetButtonAnchors(exportButton, 0.025f, 0.105f, 0.04f, 0.51f);
             motionButton = UIFactory.Button("Motion setting", root, font, "", 10,
                 UIFactory.Raised, false, () => motion());
-            SetButtonAnchors(motionButton, 0.035f, 0.095f, 0.54f, 0.96f);
-            exportStatus = AddText("Playtest privacy note", 0.1f, 0.135f, 9, UIFactory.Muted,
+            SetButtonAnchors(motionButton, 0.025f, 0.105f, 0.54f, 0.96f);
+            exportStatus = AddText("Playtest privacy note", 0.11f, 0.15f, 10, UIFactory.Muted,
                 TextAlignmentOptions.Center, false);
         }
 
@@ -120,13 +149,28 @@ namespace PulseFactory.Presentation
             currentReducedMotion = reducedMotion;
             currentExportResultKey = exportResultKey;
             rtl = localization.RightToLeft;
-            title.text = localization.Text("levelSelect");
+            title.text = localization.Text("title");
             subtitle.text = localization.Text("menuSubtitle");
+            var routeHeading = root.Find("Route heading").GetComponent<TMP_Text>();
+            routeHeading.text = localization.Text("levelSelect");
+            routeHeading.isRightToLeftText = rtl;
+            routeHeading.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
+            routeHeading.rectTransform.anchorMin = new Vector2(rtl ? 0.5f : 0.05f, 0.765f);
+            routeHeading.rectTransform.anchorMax = new Vector2(rtl ? 0.95f : 0.5f, 0.81f);
+            routeCount.text = localization.Text("levelCounter", save.HighestUnlockedLevel, catalog.Levels.Count);
+            routeCount.isRightToLeftText = rtl;
+            routeCount.alignment = rtl ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
+            routeCount.rectTransform.anchorMin = new Vector2(rtl ? 0.05f : 0.5f, 0.765f);
+            routeCount.rectTransform.anchorMax = new Vector2(rtl ? 0.5f : 0.95f, 0.81f);
+            SetButtonAnchors(exportButton, 0.025f, 0.105f, rtl ? 0.54f : 0.04f, rtl ? 0.96f : 0.51f);
+            SetButtonAnchors(motionButton, 0.025f, 0.105f, rtl ? 0.04f : 0.54f, rtl ? 0.51f : 0.96f);
             title.isRightToLeftText = subtitle.isRightToLeftText = rtl;
             exportStatus.text = localization.Text(exportResultKey);
             exportStatus.isRightToLeftText = rtl;
             SetButtonText(exportButton, localization.Text("playtestExport"), rtl);
             SetButtonText(motionButton, localization.Text(reducedMotion ? "motionOff" : "motionOn"), rtl);
+            exportButton.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
+            motionButton.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
 
             for (int i = 0; i < cards.Count; i++)
             {
@@ -136,11 +180,13 @@ namespace PulseFactory.Presentation
                 bool unlocked = entry.Number <= save.HighestUnlockedLevel;
                 int stars = save.BestResults.FirstOrDefault(item => item.LevelId == entry.LevelId)?.Stars ?? 0;
                 card.Button.interactable = unlocked;
+                card.Button.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
                 card.Number.text = localization.Text("playtestLevel", entry.Number);
                 card.Title.text = localization.Text(entry.TitleKey);
-                string detail = localization.Text("levelSummary", definition.Spawns.Count, definition.MaxBeats);
-                if (!unlocked) detail += "  ·  " + localization.Text("locked");
-                else if (stars > 0) detail += "  ·  " + localization.Text("best", stars);
+                string detail = unlocked
+                    ? localization.Text("levelSummary", definition.Spawns.Count, definition.MaxBeats)
+                    : localization.Text("locked");
+                if (stars > 0) detail = localization.Text("completed") + "  ·  " + detail;
                 card.Detail.text = detail;
                 foreach (var label in new[] { card.Number, card.Title, card.Detail })
                     label.isRightToLeftText = rtl;
@@ -149,21 +195,37 @@ namespace PulseFactory.Presentation
                 var numberRect = card.Number.rectTransform;
                 var titleRect = card.Title.rectTransform;
                 var detailRect = card.Detail.rectTransform;
-                numberRect.anchorMin = new Vector2(rtl ? 0.82f : 0.02f, 0.2f);
-                numberRect.anchorMax = new Vector2(rtl ? 0.98f : 0.18f, 0.8f);
-                titleRect.anchorMin = new Vector2(rtl ? 0.04f : 0.2f, 0.48f);
-                titleRect.anchorMax = new Vector2(rtl ? 0.8f : 0.96f, 0.95f);
-                detailRect.anchorMin = new Vector2(rtl ? 0.04f : 0.2f, 0.05f);
-                detailRect.anchorMax = new Vector2(rtl ? 0.8f : 0.96f, 0.5f);
+                var badgeRect = (RectTransform)card.Badge.transform;
+                float badgeLeft = rtl ? 0.84f : 0.035f;
+                float badgeRight = rtl ? 0.965f : 0.16f;
+                numberRect.anchorMin = badgeRect.anchorMin = new Vector2(badgeLeft, 0.14f);
+                numberRect.anchorMax = badgeRect.anchorMax = new Vector2(badgeRight, 0.86f);
+                titleRect.anchorMin = new Vector2(rtl ? 0.3f : 0.19f, 0.47f);
+                titleRect.anchorMax = new Vector2(rtl ? 0.81f : 0.7f, 0.94f);
+                detailRect.anchorMin = new Vector2(rtl ? 0.04f : 0.19f, 0.04f);
+                detailRect.anchorMax = new Vector2(rtl ? 0.81f : 0.96f, 0.48f);
+                for (int starIndex = 0; starIndex < card.Stars.Length; starIndex++)
+                {
+                    var starRect = (RectTransform)card.Stars[starIndex].transform;
+                    float x = rtl ? 0.23f - starIndex * 0.065f : 0.77f + starIndex * 0.065f;
+                    starRect.anchorMin = starRect.anchorMax = new Vector2(x, 0.72f);
+                    card.Stars[starIndex].color = starIndex < stars
+                        ? UIFactory.Amber : new Color(0.33f, 0.4f, 0.49f, 0.72f);
+                }
                 if (!unlocked)
                 {
                     card.Title.color = UIFactory.Muted;
                     card.Number.color = new Color(UIFactory.Muted.r, UIFactory.Muted.g, UIFactory.Muted.b, 0.7f);
+                    card.Badge.color = new Color(UIFactory.Muted.r, UIFactory.Muted.g, UIFactory.Muted.b, 0.12f);
+                    card.Button.image.color = new Color(0.085f, 0.11f, 0.15f);
                 }
                 else
                 {
                     card.Title.color = UIFactory.White;
                     card.Number.color = UIFactory.Mint;
+                    card.Badge.color = new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.15f);
+                    card.Button.image.color = stars > 0
+                        ? new Color(0.12f, 0.18f, 0.22f) : new Color(0.1f, 0.15f, 0.21f);
                 }
             }
         }
@@ -197,7 +259,7 @@ namespace PulseFactory.Presentation
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
             label.isRightToLeftText = rightToLeft;
-            label.fontSize = value.Length > 20 ? 8 : 10;
+            label.fontSize = value.Length > 20 ? 10 : 12;
         }
     }
 }

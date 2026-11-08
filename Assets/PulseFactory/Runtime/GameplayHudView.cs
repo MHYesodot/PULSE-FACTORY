@@ -17,39 +17,45 @@ namespace PulseFactory.Presentation
         private TMP_Text switches;
         private TMP_Text instructions;
         private TMP_Text status;
+        private GameObject statusBackground;
         public void Build(RectTransform parent, TMP_FontAsset fontAsset)
         {
             font = fontAsset;
             root = UIFactory.Rect("Gameplay HUD", parent, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(root);
-            title = AddText("Level title", 0.82f, 0.96f, 29, UIFactory.White,
-                TextAlignmentOptions.Center, true, 0.04f, 0.72f);
+            title = AddText("Level title", 0.89f, 0.96f, 27, UIFactory.White,
+                TextAlignmentOptions.Center, true, 0.04f, 0.75f);
             title.enableAutoSizing = true;
             title.fontSizeMin = 18;
-            title.fontSizeMax = 29;
-            levelNumber = AddText("Level number", 0.77f, 0.82f, 12, UIFactory.Muted,
+            title.fontSizeMax = 27;
+            levelNumber = AddText("Level number", 0.855f, 0.89f, 12, UIFactory.Muted,
                 TextAlignmentOptions.Center, true);
-            beat = AddText("Beat counter", 0.72f, 0.77f, 15, UIFactory.White,
-                TextAlignmentOptions.MidlineLeft, true, 0.06f, 0.5f);
-            progress = AddText("Delivery counter", 0.72f, 0.77f, 15, UIFactory.Mint,
-                TextAlignmentOptions.MidlineRight, true, 0.5f, 0.94f);
-            switches = AddText("Switch status", 0.665f, 0.72f, 13, UIFactory.Purple,
-                TextAlignmentOptions.Center, true);
-            instructions = AddText("Level instructions", 0.29f, 0.405f, 15, UIFactory.White,
+            var metrics = UIFactory.Image("Gameplay counters panel", root,
+                new Color(0.1f, 0.15f, 0.22f, 0.88f), true);
+            SetAnchors((RectTransform)metrics.transform, 0.795f, 0.845f, 0.055f, 0.945f);
+            beat = AddText("Beat counter", 0.795f, 0.845f, 15, UIFactory.White,
+                TextAlignmentOptions.MidlineLeft, true, 0.085f, 0.5f);
+            progress = AddText("Delivery counter", 0.795f, 0.845f, 15, UIFactory.Mint,
+                TextAlignmentOptions.MidlineRight, true, 0.5f, 0.915f);
+            var switchPanel = UIFactory.Image("Switch status panel", root,
+                new Color(0.17f, 0.14f, 0.27f, 0.82f), true);
+            SetAnchors((RectTransform)switchPanel.transform, 0.75f, 0.79f, 0.17f, 0.83f);
+            switches = AddText("Switch status", 0.75f, 0.79f, 13, UIFactory.Purple,
+                TextAlignmentOptions.Center, true, 0.18f, 0.82f);
+            instructions = AddText("Level instructions", 0.695f, 0.75f, 14, UIFactory.White,
                 TextAlignmentOptions.Center, true, 0.05f, 0.95f);
             instructions.enableAutoSizing = true;
-            instructions.fontSizeMin = 12;
-            instructions.fontSizeMax = 15;
+            instructions.fontSizeMin = 11;
+            instructions.fontSizeMax = 14;
             var statusBackground = UIFactory.Image("Command feedback panel", root,
                 new Color(0.1f, 0.16f, 0.22f), true);
             var statusRect = (RectTransform)statusBackground.transform;
-            statusRect.anchorMin = new Vector2(0.05f, 0.22f);
-            statusRect.anchorMax = new Vector2(0.95f, 0.29f);
-            statusRect.offsetMin = statusRect.offsetMax = Vector2.zero;
+            SetAnchors(statusRect, 0.265f, 0.295f, 0.1f, 0.9f);
+            this.statusBackground = statusBackground.gameObject;
             status = UIFactory.Text("Command feedback", root, font, "", 13, UIFactory.Muted,
                 TextAlignmentOptions.Center, false);
-            SetAnchors(status.rectTransform, 0.23f, 0.28f, 0.07f, 0.93f);
+            SetAnchors(status.rectTransform, 0.265f, 0.295f, 0.1f, 0.9f);
         }
 
         public void Refresh(LevelCatalogEntry entry, LevelDefinition level, SimulationState state,
@@ -72,6 +78,9 @@ namespace PulseFactory.Presentation
             switches.isRightToLeftText = text.RightToLeft;
             status.color = feedbackKey.StartsWith("failure", System.StringComparison.Ordinal)
                 ? UIFactory.Amber : animating ? UIFactory.Mint : UIFactory.Muted;
+            bool showStatus = animating || feedbackKey.StartsWith("failure", System.StringComparison.Ordinal);
+            status.gameObject.SetActive(showStatus);
+            statusBackground.SetActive(showStatus);
         }
 
         public void SetLocalization(LocalizationCatalog text)

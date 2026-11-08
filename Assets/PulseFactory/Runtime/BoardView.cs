@@ -16,6 +16,8 @@ namespace PulseFactory.Presentation
     {
         private readonly Dictionary<string, RectTransform> nodeTransforms = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, TMP_Text> nodeLabels = new Dictionary<string, TMP_Text>();
+        private readonly Dictionary<string, Image> destinationPlates = new Dictionary<string, Image>();
+        private readonly Dictionary<string, Outline> destinationOutlines = new Dictionary<string, Outline>();
         private readonly Dictionary<string, DiverterView> diverters = new Dictionary<string, DiverterView>();
         private readonly List<(EdgeDefinition Edge, ConveyorView View)> conveyors = new List<(EdgeDefinition, ConveyorView)>();
         private readonly Dictionary<string, PackageDefinition> packageDefinitions = new Dictionary<string, PackageDefinition>();
@@ -28,6 +30,7 @@ namespace PulseFactory.Presentation
         private Vector2 lastSize;
         private bool isRightToLeft;
         private bool presenting;
+        private bool reducedMotion;
         private const float NodeSize = 48f;
 
         public void Build(RectTransform parent, TMP_FontAsset fontAsset, LocalizationCatalog localization)
@@ -39,6 +42,9 @@ namespace PulseFactory.Presentation
             UIFactory.Stretch(boardRect);
             var background = UIFactory.Image("Board surface", boardRect, new Color(0.055f, 0.085f, 0.13f), true);
             UIFactory.Stretch((RectTransform)background.transform);
+            var surfaceOutline = background.gameObject.AddComponent<Outline>();
+            surfaceOutline.effectColor = new Color(0.43f, 0.56f, 0.7f, 0.28f);
+            surfaceOutline.effectDistance = new Vector2(1, -1);
             packageLayer = UIFactory.Rect("Packages", boardRect, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(packageLayer);
@@ -66,8 +72,9 @@ namespace PulseFactory.Presentation
 
             foreach (var node in engine.Level.Nodes)
             {
-                var nodeRoot = UIFactory.Rect("Node " + node.Id, boardRect, Vector2.zero, Vector2.zero,
-                    new Vector2(0.5f, 0.5f), new Vector2(NodeSize, NodeSize + 26), Vector2.zero);
+                var nodeRoot = UIFactory.Rect("Node " + node.Id, boardRect,
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f), new Vector2(NodeSize, NodeSize + 42), Vector2.zero);
                 nodeTransforms.Add(node.Id, nodeRoot);
                 TMP_Text caption;
                 if (node.Type == NodeType.Diverter)
@@ -83,30 +90,39 @@ namespace PulseFactory.Presentation
                     var baseColor = node.Type == NodeType.Source ? new Color(0.16f, 0.34f, 0.49f)
                         : node.Type == NodeType.Destination ? DestinationColor(node.Accepts)
                         : new Color(0.19f, 0.26f, 0.34f);
-                    var plate = UIFactory.Image("Node plate", nodeRoot, baseColor, true);
+                    var plate = node.Type == NodeType.Destination && node.Accepts == "blue"
+                        ? UIFactory.Circle("Node plate", nodeRoot, baseColor)
+                        : UIFactory.Image("Node plate", nodeRoot, baseColor, true);
                     var plateRect = (RectTransform)plate.transform;
                     plateRect.sizeDelta = new Vector2(NodeSize, NodeSize);
                     var outline = plate.gameObject.AddComponent<Outline>();
                     outline.effectColor = new Color(0.75f, 0.84f, 0.93f, 0.55f);
                     outline.effectDistance = new Vector2(1.5f, -1.5f);
+                    if (node.Type == NodeType.Destination)
+                    {
+                        destinationPlates.Add(node.Id, plate);
+                        destinationOutlines.Add(node.Id, outline);
+                    }
                     string icon = node.Type == NodeType.Destination ? text.Text(node.Accepts + "Symbol")
                         : node.Type == NodeType.Source ? text.Text("sourceIcon") : ">";
                     var iconText = UIFactory.Text("Node icon", plate.transform, font, icon, 20,
                         Color.white, TextAlignmentOptions.Center, isRightToLeft, true);
+                    iconText.fontSize = node.Type == NodeType.Source ? 14 : 23;
                     UIFactory.Stretch(iconText.rectTransform, 3, 3);
                     caption = UIFactory.Text("Node label", nodeRoot, font, "", 10, UIFactory.Muted,
                         TextAlignmentOptions.Center, isRightToLeft, true);
                 }
                 var labelRect = caption.rectTransform;
-                labelRect.anchorMin = labelRect.anchorMax = new Vector2(0.5f, 0);
-                labelRect.sizeDelta = new Vector2(100, 25);
-                labelRect.anchoredPosition = new Vector2(0, -13);
+                labelRect.anchorMin = labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRect.sizeDelta = new Vector2(node.Type == NodeType.Destination ? 72 : 86, 18);
+                labelRect.anchoredPosition = new Vector2(0, -(NodeSize * 0.5f + 12));
                 nodeLabels.Add(node.Id, caption);
             }
             packageLayer.SetAsLastSibling();
             lastSize = Vector2.zero;
             Reflow();
             SetSwitches(state.Switches);
+            UpdateDestinations(state);
             RenderPackages(state);
         }
 
@@ -115,9 +131,11 @@ namespace PulseFactory.Presentation
             text = localization;
             isRightToLeft = localization.RightToLeft;
             foreach (var pair in diverters)
-                pair.Value.SetState(currentState.Switches, text);
+                pair.Value.SetState(currentState.Switches, text, false);
             UpdateNodeLabels();
         }
+
+        public void SetReducedMotion(bool value) => reducedMotion = value;
 
         public IEnumerator Present(SimulationResult result, float duration)
         {
@@ -154,6 +172,7 @@ namespace PulseFactory.Presentation
                     {
                         var view = views[move.PackageId];
                         view.SetPosition(Vector2.Lerp(Position(move.From), Position(move.To), fraction));
+                        view.SetTravel(fraction);
                         if (delivered.Contains(move.PackageId) && elapsed > duration * 0.72f)
                             view.SetDelivery(Mathf.Clamp01((elapsed - duration * 0.72f) / (duration * 0.28f)));
                     }
@@ -197,7 +216,7 @@ namespace PulseFactory.Presentation
             {
                 var start = Point(segment.Edge.From);
                 var end = Point(segment.Edge.To);
-                segment.View.Layout(start, end, 22, engine.Route(nodes.First(n => n.Id == segment.Edge.From),
+                segment.View.Layout(start, end, 24, engine.Route(nodes.First(n => n.Id == segment.Edge.From),
                     currentState.Switches) == segment.Edge.To);
             }
             UpdateNodeLabels();
@@ -214,7 +233,7 @@ namespace PulseFactory.Presentation
                     : node.Type == NodeType.Destination ? "nodeDestination" : "nodeConveyor";
                 string label = node.Type == NodeType.Diverter
                     ? text.Text(key, text.Text(node.Group == SwitchGroup.A ? "switchA" : "switchB"))
-                    : node.Type == NodeType.Destination ? text.Text(key, text.Text(node.Accepts))
+                    : node.Type == NodeType.Destination ? text.Text(node.Accepts)
                     : text.Text(key);
                 nodeLabels[node.Id].text = label;
                 nodeLabels[node.Id].isRightToLeftText = text.RightToLeft;
@@ -223,7 +242,7 @@ namespace PulseFactory.Presentation
 
         private void SetSwitches(SwitchState switches)
         {
-            foreach (var diverter in diverters.Values) diverter.SetState(switches, text);
+            foreach (var diverter in diverters.Values) diverter.SetState(switches, text, !reducedMotion);
             if (engine != null)
                 foreach (var segment in conveyors)
                 {
@@ -236,6 +255,7 @@ namespace PulseFactory.Presentation
 
         private void RenderPackages(SimulationState state)
         {
+            UpdateDestinations(state);
             ClearPackages();
             foreach (var package in state.Packages)
             {
@@ -253,6 +273,21 @@ namespace PulseFactory.Presentation
             return view;
         }
 
+        private void UpdateDestinations(SimulationState state)
+        {
+            var completed = state.Deliveries.GroupBy(delivery => delivery.DestinationId)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+            foreach (var node in engine.Level.Nodes)
+            {
+                if (!destinationPlates.TryGetValue(node.Id, out var plate)) continue;
+                bool delivered = completed.TryGetValue(node.Id, out int count) && count >= node.RequiredCount;
+                plate.color = delivered ? new Color(0.16f, 0.43f, 0.36f) : DestinationColor(node.Accepts);
+                destinationOutlines[node.Id].effectColor = delivered
+                    ? new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.95f)
+                    : new Color(0.75f, 0.84f, 0.93f, 0.55f);
+            }
+        }
+
         private void ClearBoard()
         {
             foreach (var node in nodeTransforms.Values)
@@ -261,6 +296,8 @@ namespace PulseFactory.Presentation
                 if (segment.View != null) Destroy(segment.View.gameObject);
             nodeTransforms.Clear();
             nodeLabels.Clear();
+            destinationPlates.Clear();
+            destinationOutlines.Clear();
             diverters.Clear();
             conveyors.Clear();
             ClearPackages();
