@@ -13,8 +13,10 @@
     { "key": "motionOn", "value": "הנפשה: פעילה" },
     { "key": "motionOff", "value": "הנפשה: כבויה" },
     { "key": "beat", "value": "פעימה {0} / {1}" },
+    { "key": "beatLabel", "value": "פעימה" },
     { "key": "switches", "value": "א: {0}     ב: {1}" },
     { "key": "progress", "value": "נמסרו {0} / {1}" },
+    { "key": "progressLabel", "value": "נמסרו" },
     { "key": "best", "value": "שיא: {0} כוכבים" },
     { "key": "playing", "value": "בחרו פקודה. כל פקודה מקדמת פעימה אחת." },
     { "key": "animating", "value": "החבילות בתנועה" },
@@ -47,6 +49,7 @@
     { "key": "playAgain", "value": "שחקו שוב" },
     { "key": "tryAgain", "value": "נסו שוב" },
     { "key": "levelComplete", "value": "המסלול הושלם" },
+    { "key": "completedLevel", "value": "{1} · שלב {0}" },
     { "key": "allComplete", "value": "אלופי המפעל" },
     { "key": "failedTitle", "value": "המסלול נחסם" },
     { "key": "commandCount", "value": "{0} פקודות" },
@@ -89,6 +92,7 @@
     { "key": "switchB", "value": "ב" },
     { "key": "languageEnglish", "value": "English" },
     { "key": "languageHebrew", "value": "עברית" },
+    { "key": "languageToggle", "value": "English" },
     { "key": "sourceIcon", "value": "כניסה" }
   ]
 }

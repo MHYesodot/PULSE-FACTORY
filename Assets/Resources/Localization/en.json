@@ -13,8 +13,10 @@
     { "key": "motionOn", "value": "Animation: on" },
     { "key": "motionOff", "value": "Animation: off" },
     { "key": "beat", "value": "Beat {0} / {1}" },
+    { "key": "beatLabel", "value": "Beat" },
     { "key": "switches", "value": "A: {0}     B: {1}" },
     { "key": "progress", "value": "Delivered {0} / {1}" },
+    { "key": "progressLabel", "value": "Delivered" },
     { "key": "best", "value": "Best: {0} stars" },
     { "key": "playing", "value": "Choose a command. Each command advances one beat." },
     { "key": "animating", "value": "Moving packages..." },
@@ -47,6 +49,7 @@
     { "key": "playAgain", "value": "PLAY AGAIN" },
     { "key": "tryAgain", "value": "TRY AGAIN" },
     { "key": "levelComplete", "value": "ROUTE COMPLETE" },
+    { "key": "completedLevel", "value": "LEVEL {0} · {1}" },
     { "key": "allComplete", "value": "FACTORY MASTERED" },
     { "key": "failedTitle", "value": "ROUTE BLOCKED" },
     { "key": "commandCount", "value": "{0} commands" },
@@ -89,6 +92,7 @@
     { "key": "switchB", "value": "B" },
     { "key": "languageEnglish", "value": "עברית" },
     { "key": "languageHebrew", "value": "English" },
+    { "key": "languageToggle", "value": "עברית" },
     { "key": "sourceIcon", "value": "IN" }
   ]
 }

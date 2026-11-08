@@ -1,3 +1,4 @@
+using System.Globalization;
 using PulseFactory.Core;
 using PulseFactory.Localization;
 using PulseFactory.UI;
@@ -12,8 +13,10 @@ namespace PulseFactory.Presentation
         private RectTransform root;
         private TMP_Text title;
         private TMP_Text levelNumber;
-        private TMP_Text beat;
-        private TMP_Text progress;
+        private TMP_Text beatLabel;
+        private TMP_Text beatValue;
+        private TMP_Text progressLabel;
+        private TMP_Text progressValue;
         private TMP_Text switches;
         private TMP_Text instructions;
         private TMP_Text status;
@@ -34,10 +37,14 @@ namespace PulseFactory.Presentation
             var metrics = UIFactory.Image("Gameplay counters panel", root,
                 new Color(0.1f, 0.15f, 0.22f, 0.88f), true);
             SetAnchors((RectTransform)metrics.transform, 0.795f, 0.845f, 0.055f, 0.945f);
-            beat = AddText("Beat counter", 0.795f, 0.845f, 15, UIFactory.White,
-                TextAlignmentOptions.MidlineLeft, true, 0.085f, 0.5f);
-            progress = AddText("Delivery counter", 0.795f, 0.845f, 15, UIFactory.Mint,
-                TextAlignmentOptions.MidlineRight, true, 0.5f, 0.915f);
+            beatLabel = AddText("Beat label", 0.795f, 0.845f, 12, UIFactory.Muted,
+                TextAlignmentOptions.MidlineLeft, true, 0.05f, 0.22f);
+            beatValue = AddText("Beat count", 0.795f, 0.845f, 15, UIFactory.White,
+                TextAlignmentOptions.MidlineRight, false, 0.22f, 0.48f);
+            progressLabel = AddText("Delivery label", 0.795f, 0.845f, 12, UIFactory.Muted,
+                TextAlignmentOptions.MidlineLeft, true, 0.52f, 0.72f);
+            progressValue = AddText("Delivery count", 0.795f, 0.845f, 15, UIFactory.Mint,
+                TextAlignmentOptions.MidlineRight, false, 0.72f, 0.95f);
             var switchPanel = UIFactory.Image("Switch status panel", root,
                 new Color(0.17f, 0.14f, 0.27f, 0.82f), true);
             SetAnchors((RectTransform)switchPanel.transform, 0.75f, 0.79f, 0.17f, 0.83f);
@@ -62,20 +69,23 @@ namespace PulseFactory.Presentation
             LocalizationCatalog text, string feedbackKey, object[] feedbackArgs, bool animating)
         {
             title.text = text.Text(entry.TitleKey);
-            title.isRightToLeftText = text.RightToLeft;
+            UIFactory.SetTextDirection(title, text.RightToLeft);
             levelNumber.text = text.Text("playtestLevel", entry.Number);
-            levelNumber.isRightToLeftText = text.RightToLeft;
-            beat.text = text.Text("beat", state.Beat, level.MaxBeats);
-            progress.text = text.Text("progress", state.Deliveries.Count, level.Spawns.Count);
+            UIFactory.SetTextDirection(levelNumber, text.RightToLeft);
+            beatLabel.text = text.Text("beatLabel");
+            beatValue.text = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", state.Beat, level.MaxBeats);
+            progressLabel.text = text.Text("progressLabel");
+            progressValue.text = string.Format(CultureInfo.InvariantCulture, "{0} / {1}",
+                state.Deliveries.Count, level.Spawns.Count);
             switches.text = text.Text("switches", state.Switches.A ? text.Text("switchOn") : text.Text("switchOff"),
                 state.Switches.B ? text.Text("switchOn") : text.Text("switchOff"));
             instructions.text = text.Text(entry.InstructionKey);
             status.text = text.Text(feedbackKey, feedbackArgs);
-            status.isRightToLeftText = text.RightToLeft;
-            instructions.isRightToLeftText = text.RightToLeft;
-            beat.isRightToLeftText = text.RightToLeft;
-            progress.isRightToLeftText = text.RightToLeft;
-            switches.isRightToLeftText = text.RightToLeft;
+            foreach (var label in new[] { status, instructions, beatLabel, progressLabel, switches })
+                UIFactory.SetTextDirection(label, text.RightToLeft);
+            UIFactory.SetTextDirection(beatValue, false);
+            UIFactory.SetTextDirection(progressValue, false);
+            LayoutMetrics(text.RightToLeft);
             status.color = feedbackKey.StartsWith("failure", System.StringComparison.Ordinal)
                 ? UIFactory.Amber : animating ? UIFactory.Mint : UIFactory.Muted;
             bool showStatus = animating || feedbackKey.StartsWith("failure", System.StringComparison.Ordinal);
@@ -86,7 +96,30 @@ namespace PulseFactory.Presentation
         public void SetLocalization(LocalizationCatalog text)
         {
             foreach (var label in GetComponentsInChildren<TMP_Text>(true))
-                label.isRightToLeftText = text.RightToLeft;
+                UIFactory.SetTextDirection(label, text.RightToLeft);
+            UIFactory.SetTextDirection(beatValue, false);
+            UIFactory.SetTextDirection(progressValue, false);
+            LayoutMetrics(text.RightToLeft);
+        }
+
+        private void LayoutMetrics(bool rtl)
+        {
+            SetMetric(beatLabel, rtl ? 0.27f : 0.05f, rtl ? 0.48f : 0.22f,
+                rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft);
+            SetMetric(beatValue, rtl ? 0.05f : 0.22f, rtl ? 0.25f : 0.48f,
+                TextAlignmentOptions.Midline);
+            SetMetric(progressLabel, rtl ? 0.74f : 0.52f, rtl ? 0.95f : 0.72f,
+                rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft);
+            SetMetric(progressValue, rtl ? 0.52f : 0.72f, rtl ? 0.72f : 0.95f,
+                TextAlignmentOptions.Midline);
+        }
+
+        private static void SetMetric(TMP_Text label, float left, float right, TextAlignmentOptions alignment)
+        {
+            label.rectTransform.anchorMin = new Vector2(left, 0.795f);
+            label.rectTransform.anchorMax = new Vector2(right, 0.845f);
+            label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+            label.alignment = alignment;
         }
 
         private TMP_Text AddText(string name, float bottom, float top, float size, Color color,

@@ -6,8 +6,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using PulseFactory.Core;
+using PulseFactory.Presentation;
 using PulseFactory.Persistence;
 using PulseFactory.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -61,6 +63,19 @@ namespace PulseFactory.Tests
                 var rect = (RectTransform)child;
                 Assert.That(rect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)), child.name);
                 Assert.That(rect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)), child.name);
+            }
+        }
+
+        private static void AssertLanguageLabels(GameController controller, string expected, bool rtl)
+        {
+            var labels = controller.UI.Canvas.GetComponentsInChildren<TMP_Text>(true)
+                .Where(label => label.transform.parent != null && label.transform.parent.name == "Language")
+                .ToArray();
+            Assert.That(labels.Length, Is.EqualTo(2));
+            foreach (var label in labels)
+            {
+                Assert.That(label.text, Is.EqualTo(expected));
+                Assert.That(label.isRightToLeftText, Is.EqualTo(rtl));
             }
         }
         #endif
@@ -249,7 +264,7 @@ namespace PulseFactory.Tests
         }
 
         [UnityTest]
-        public IEnumerator PhaseThreeScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo()
+        public IEnumerator PhaseFourAScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo()
         {
             if (!string.IsNullOrWhiteSpace(screenshotDirectory))
             {
@@ -266,10 +281,12 @@ namespace PulseFactory.Tests
             AssertBoardNodesUseCenteredAnchors(controller);
             controller.ToggleLocale();
             Assert.That(controller.Locale, Is.EqualTo("he"));
+            AssertLanguageLabels(controller, "English", false);
             yield return CaptureReviewScreen("02-gameplay-hebrew.png");
 
             controller.ToggleLocale();
             Assert.That(controller.Locale, Is.EqualTo("en"));
+            AssertLanguageLabels(controller, "עברית", true);
             yield return CaptureReviewScreen("03-gameplay-english.png");
 
             yield return Command(controller, SimulationCommand.Move);
@@ -290,12 +307,43 @@ namespace PulseFactory.Tests
             Assert.That(controller.Session.Engine.Level.Id, Is.EqualTo("shared-control"));
             yield return null;
             AssertBoardNodesUseCenteredAnchors(controller);
+            var bridgeLayer = controller.UI.Board.transform.Find("Board viewport/Factory board/Raised crossover bridges");
+            Assert.That(bridgeLayer, Is.Not.Null);
+            Assert.That(bridgeLayer.childCount, Is.GreaterThanOrEqualTo(1),
+                "Level 2's crossing routes must have a raised, non-junction bridge.");
+            var sharedSwitches = controller.UI.Board.GetComponentsInChildren<DiverterView>(true);
+            Assert.That(sharedSwitches.Length, Is.EqualTo(2));
+            Assert.That(sharedSwitches.All(diverter => !diverter.SwitchIsOn), Is.True);
+            controller.ToggleLocale();
+            AssertLanguageLabels(controller, "English", false);
+            yield return CaptureReviewScreen("09-level-two-hebrew.png");
+            controller.ToggleLocale();
+            AssertLanguageLabels(controller, "עברית", true);
             yield return CaptureReviewScreen("05-gameplay-level-two.png");
-            yield return Command(controller, SimulationCommand.PulseA);
-            yield return Command(controller, SimulationCommand.Move);
+            Assert.That(controller.Execute(SimulationCommand.PulseA), Is.True);
+            yield return new WaitForSecondsRealtime(0.06f);
+            Assert.That(sharedSwitches.All(diverter => diverter.SwitchIsOn), Is.True,
+                "Both Level 2 diverters must reflect the same Pulse A beat.");
+            yield return CaptureReviewScreen("07-level-two-after-pulse.png");
+            yield return new WaitForSecondsRealtime(0.35f);
+            Assert.That(controller.IsAnimating, Is.False);
+            Assert.That(controller.Execute(SimulationCommand.Move), Is.True);
+            yield return new WaitForSecondsRealtime(0.15f);
+            yield return CaptureReviewScreen("08-package-moving.png");
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.That(controller.IsAnimating, Is.False);
             Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
             Assert.That(controller.Session.State.Deliveries.Select(item => item.DestinationId),
                 Is.EquivalentTo(new[] { "R", "B" }));
+        }
+
+        [TestCase("English", false)]
+        [TestCase("עברית", true)]
+        [TestCase("LEVEL 2 · Shared control", false)]
+        [TestCase("שלב 2 · שליטה משותפת", true)]
+        public void TextDirectionFollowsFirstStrongCharacter(string value, bool expectedRtl)
+        {
+            Assert.That(UIFactory.IsRightToLeftContent(value, !expectedRtl), Is.EqualTo(expectedRtl));
         }
     }
 }

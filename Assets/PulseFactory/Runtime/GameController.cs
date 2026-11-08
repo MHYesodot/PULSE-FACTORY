@@ -71,8 +71,10 @@ namespace PulseFactory.UI
             english.ValidateRequiredKeys("title", "menuSubtitle", "levelSelect", "levelCounter", "playtestLevel",
                 "levelSummary", "locked", "playtestExport", "exportComplete", "exportFailed", "statsDisclaimer",
                 "move", "pulseA", "pulseB", "undo", "restart", "back", "nextLevel", "playAgain", "tryAgain",
-                "motionOn", "motionOff", "languageEnglish", "languageHebrew", "beat", "switches", "progress",
-                "best", "playing", "animating", "victory", "levelComplete", "allComplete", "failedTitle",
+                "motionOn", "motionOff", "languageEnglish", "languageHebrew", "languageToggle",
+                "beat", "beatLabel", "switches",
+                "progress", "progressLabel",
+                "best", "playing", "animating", "victory", "levelComplete", "completedLevel", "allComplete", "failedTitle",
                 "failureCollision", "failureWrongDestination", "failureDestinationFull", "failureBeatLimit",
                 "switchOn", "switchOff", "switchA", "switchB", "source", "nodeSource", "nodeConveyor",
                 "nodeDiverter", "nodeDestination", "red", "blue", "redSymbol", "blueSymbol", "sourceIcon", "saveWarning");
@@ -186,7 +188,7 @@ namespace PulseFactory.UI
             if (result.State.Result.Status == LevelStatus.Victory)
             {
                 bool finalLevel = currentEntry.Number == catalog.Levels.Count;
-                ui.ShowVictory(result.State.Result.Stars, finalLevel, !finalLevel);
+                ui.ShowVictory(currentEntry, result.State.Result.Stars, finalLevel, !finalLevel);
             }
             else if (result.State.Result.Status == LevelStatus.Failed)
                 ui.ShowFailure("failure" + result.State.Result.Failure);

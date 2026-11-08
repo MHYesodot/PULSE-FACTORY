@@ -14,8 +14,8 @@ namespace PulseFactory.Presentation
     public sealed class LevelSelectionView : MonoBehaviour
     {
         private readonly List<(LevelCatalogEntry Entry, Button Button, TMP_Text Number, TMP_Text Title,
-            TMP_Text Detail, Image[] Stars, Image Badge)> cards =
-            new List<(LevelCatalogEntry, Button, TMP_Text, TMP_Text, TMP_Text, Image[], Image)>();
+            TMP_Text Detail, Image[] Stars, Image Badge, Image Accent, Outline Border)> cards =
+            new List<(LevelCatalogEntry, Button, TMP_Text, TMP_Text, TMP_Text, Image[], Image, Image, Outline)>();
         private readonly List<LevelDefinition> definitions = new List<LevelDefinition>();
         private LevelCatalog catalog;
         private TMP_FontAsset font;
@@ -93,6 +93,14 @@ namespace PulseFactory.Presentation
                 var button = UIFactory.Button("Level " + entry.Number, content, font, "", 13,
                     new Color(0.1f, 0.15f, 0.21f), false, () => start(entry.Number));
                 UIFactory.Shadow(button.image, new Color(0, 0, 0, 0.25f), new Vector2(0, -1), 3);
+                var border = button.gameObject.AddComponent<Outline>();
+                border.effectColor = UIFactory.Steel;
+                border.effectDistance = new Vector2(1, -1);
+                var accent = UIFactory.Image("Card machine rail", button.transform, UIFactory.Steel, true);
+                var accentRect = (RectTransform)accent.transform;
+                accentRect.anchorMin = new Vector2(0.015f, 0.18f);
+                accentRect.anchorMax = new Vector2(0.03f, 0.82f);
+                accentRect.offsetMin = accentRect.offsetMax = Vector2.zero;
                 var element = button.gameObject.AddComponent<LayoutElement>();
                 element.preferredHeight = 78;
                 element.minHeight = 68;
@@ -130,7 +138,7 @@ namespace PulseFactory.Presentation
                     starRect.sizeDelta = new Vector2(16, 16);
                     starRect.anchoredPosition = Vector2.zero;
                 }
-                cards.Add((entry, button, number, name, detail, stars, badge));
+                cards.Add((entry, button, number, name, detail, stars, badge, accent, border));
             }
 
             exportButton = UIFactory.Button("Export playtest data", root, font, "", 10,
@@ -153,20 +161,21 @@ namespace PulseFactory.Presentation
             subtitle.text = localization.Text("menuSubtitle");
             var routeHeading = root.Find("Route heading").GetComponent<TMP_Text>();
             routeHeading.text = localization.Text("levelSelect");
-            routeHeading.isRightToLeftText = rtl;
+            UIFactory.SetTextDirection(routeHeading, rtl);
             routeHeading.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
             routeHeading.rectTransform.anchorMin = new Vector2(rtl ? 0.5f : 0.05f, 0.765f);
             routeHeading.rectTransform.anchorMax = new Vector2(rtl ? 0.95f : 0.5f, 0.81f);
             routeCount.text = localization.Text("levelCounter", save.HighestUnlockedLevel, catalog.Levels.Count);
-            routeCount.isRightToLeftText = rtl;
+            UIFactory.SetTextDirection(routeCount, rtl);
             routeCount.alignment = rtl ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
             routeCount.rectTransform.anchorMin = new Vector2(rtl ? 0.05f : 0.5f, 0.765f);
             routeCount.rectTransform.anchorMax = new Vector2(rtl ? 0.5f : 0.95f, 0.81f);
             SetButtonAnchors(exportButton, 0.025f, 0.105f, rtl ? 0.54f : 0.04f, rtl ? 0.96f : 0.51f);
             SetButtonAnchors(motionButton, 0.025f, 0.105f, rtl ? 0.04f : 0.54f, rtl ? 0.51f : 0.96f);
-            title.isRightToLeftText = subtitle.isRightToLeftText = rtl;
+            UIFactory.SetTextDirection(title, rtl);
+            UIFactory.SetTextDirection(subtitle, rtl);
             exportStatus.text = localization.Text(exportResultKey);
-            exportStatus.isRightToLeftText = rtl;
+            UIFactory.SetTextDirection(exportStatus, rtl);
             SetButtonText(exportButton, localization.Text("playtestExport"), rtl);
             SetButtonText(motionButton, localization.Text(reducedMotion ? "motionOff" : "motionOn"), rtl);
             exportButton.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
@@ -189,7 +198,7 @@ namespace PulseFactory.Presentation
                 if (stars > 0) detail = localization.Text("completed") + "  ·  " + detail;
                 card.Detail.text = detail;
                 foreach (var label in new[] { card.Number, card.Title, card.Detail })
-                    label.isRightToLeftText = rtl;
+                    UIFactory.SetTextDirection(label, rtl);
                 card.Title.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
                 card.Detail.alignment = rtl ? TextAlignmentOptions.MidlineRight : TextAlignmentOptions.MidlineLeft;
                 var numberRect = card.Number.rectTransform;
@@ -218,6 +227,8 @@ namespace PulseFactory.Presentation
                     card.Number.color = new Color(UIFactory.Muted.r, UIFactory.Muted.g, UIFactory.Muted.b, 0.7f);
                     card.Badge.color = new Color(UIFactory.Muted.r, UIFactory.Muted.g, UIFactory.Muted.b, 0.12f);
                     card.Button.image.color = new Color(0.085f, 0.11f, 0.15f);
+                    card.Accent.color = new Color(UIFactory.Steel.r, UIFactory.Steel.g, UIFactory.Steel.b, 0.35f);
+                    card.Border.effectColor = new Color(UIFactory.Steel.r, UIFactory.Steel.g, UIFactory.Steel.b, 0.5f);
                 }
                 else
                 {
@@ -226,6 +237,11 @@ namespace PulseFactory.Presentation
                     card.Badge.color = new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.15f);
                     card.Button.image.color = stars > 0
                         ? new Color(0.12f, 0.18f, 0.22f) : new Color(0.1f, 0.15f, 0.21f);
+                    var stateColor = stars == 3 ? UIFactory.Brass : stars > 0 ? UIFactory.Mint : UIFactory.SteelLight;
+                    card.Accent.color = stateColor;
+                    card.Border.effectColor = stars == 3 ? UIFactory.Brass
+                        : stars > 0 ? new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.8f)
+                        : new Color(UIFactory.SteelLight.r, UIFactory.SteelLight.g, UIFactory.SteelLight.b, 0.45f);
                 }
             }
         }
@@ -258,7 +274,7 @@ namespace PulseFactory.Presentation
         {
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
-            label.isRightToLeftText = rightToLeft;
+            UIFactory.SetTextDirection(label, rightToLeft);
             label.fontSize = value.Length > 20 ? 10 : 12;
         }
     }

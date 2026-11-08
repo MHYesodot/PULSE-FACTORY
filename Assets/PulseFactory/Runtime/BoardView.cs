@@ -16,13 +16,15 @@ namespace PulseFactory.Presentation
     {
         private readonly Dictionary<string, RectTransform> nodeTransforms = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, TMP_Text> nodeLabels = new Dictionary<string, TMP_Text>();
-        private readonly Dictionary<string, Image> destinationPlates = new Dictionary<string, Image>();
-        private readonly Dictionary<string, Outline> destinationOutlines = new Dictionary<string, Outline>();
+        private readonly Dictionary<string, StationView> stations = new Dictionary<string, StationView>();
         private readonly Dictionary<string, DiverterView> diverters = new Dictionary<string, DiverterView>();
         private readonly List<(EdgeDefinition Edge, ConveyorView View)> conveyors = new List<(EdgeDefinition, ConveyorView)>();
+        private readonly List<(EdgeDefinition Edge, RectTransform Root, Image Route)> bridges =
+            new List<(EdgeDefinition, RectTransform, Image)>();
         private readonly Dictionary<string, PackageDefinition> packageDefinitions = new Dictionary<string, PackageDefinition>();
         private RectTransform boardRect;
         private RectTransform packageLayer;
+        private RectTransform crossingLayer;
         private TMP_FontAsset font;
         private LocalizationCatalog text;
         private SimulationEngine engine;
@@ -31,8 +33,6 @@ namespace PulseFactory.Presentation
         private bool isRightToLeft;
         private bool presenting;
         private bool reducedMotion;
-        private const float NodeSize = 48f;
-
         public void Build(RectTransform parent, TMP_FontAsset fontAsset, LocalizationCatalog localization)
         {
             font = fontAsset;
@@ -40,11 +40,23 @@ namespace PulseFactory.Presentation
             boardRect = UIFactory.Rect("Factory board", parent, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(boardRect);
-            var background = UIFactory.Image("Board surface", boardRect, new Color(0.055f, 0.085f, 0.13f), true);
-            UIFactory.Stretch((RectTransform)background.transform);
-            var surfaceOutline = background.gameObject.AddComponent<Outline>();
-            surfaceOutline.effectColor = new Color(0.43f, 0.56f, 0.7f, 0.28f);
+            var deck = UIFactory.Image("Machined deck surround", boardRect, UIFactory.Steel, true);
+            UIFactory.Stretch((RectTransform)deck.transform, 2, 2);
+            var deckSurface = UIFactory.Image("Recessed factory deck", boardRect, UIFactory.Panel, true);
+            UIFactory.Stretch((RectTransform)deckSurface.transform, 6, 6);
+            var surfaceOutline = deckSurface.gameObject.AddComponent<Outline>();
+            surfaceOutline.effectColor = new Color(UIFactory.SteelLight.r, UIFactory.SteelLight.g,
+                UIFactory.SteelLight.b, 0.3f);
             surfaceOutline.effectDistance = new Vector2(1, -1);
+            for (int i = 0; i < 4; i++)
+            {
+                var fastener = UIFactory.Circle("Deck fastener", boardRect, UIFactory.SteelLight);
+                var fastenerRect = (RectTransform)fastener.transform;
+                fastenerRect.anchorMin = fastenerRect.anchorMax = new Vector2(i % 2 == 0 ? 0.035f : 0.965f,
+                    i < 2 ? 0.04f : 0.96f);
+                fastenerRect.sizeDelta = new Vector2(5, 5);
+                fastenerRect.anchoredPosition = Vector2.zero;
+            }
             packageLayer = UIFactory.Rect("Packages", boardRect, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(packageLayer);
@@ -70,58 +82,55 @@ namespace PulseFactory.Presentation
                 conveyors.Add((edge, segment));
             }
 
+            crossingLayer = UIFactory.Rect("Raised crossover bridges", boardRect, Vector2.zero, Vector2.one,
+                new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            UIFactory.Stretch(crossingLayer);
+
             foreach (var node in engine.Level.Nodes)
             {
                 var nodeRoot = UIFactory.Rect("Node " + node.Id, boardRect,
                     new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(0.5f, 0.5f), new Vector2(NodeSize, NodeSize + 42), Vector2.zero);
+                    new Vector2(0.5f, 0.5f), new Vector2(UIFactory.BoardNodeSize, UIFactory.BoardNodeSize + 42), Vector2.zero);
                 nodeTransforms.Add(node.Id, nodeRoot);
                 TMP_Text caption;
                 if (node.Type == NodeType.Diverter)
                 {
                     var diverter = nodeRoot.gameObject.AddComponent<DiverterView>();
-                    diverter.Build(nodeRoot, font, node.Group.Value, node.Inverted, isRightToLeft);
+                    diverter.Build(nodeRoot, font, node.Group.Value, isRightToLeft);
                     diverters.Add(node.Id, diverter);
                     caption = UIFactory.Text("Node label", nodeRoot, font, "", 10, UIFactory.Muted,
                         TextAlignmentOptions.Center, isRightToLeft, true);
                 }
                 else
                 {
-                    var baseColor = node.Type == NodeType.Source ? new Color(0.16f, 0.34f, 0.49f)
-                        : node.Type == NodeType.Destination ? DestinationColor(node.Accepts)
-                        : new Color(0.19f, 0.26f, 0.34f);
-                    var plate = node.Type == NodeType.Destination && node.Accepts == "blue"
-                        ? UIFactory.Circle("Node plate", nodeRoot, baseColor)
-                        : UIFactory.Image("Node plate", nodeRoot, baseColor, true);
-                    var plateRect = (RectTransform)plate.transform;
-                    plateRect.sizeDelta = new Vector2(NodeSize, NodeSize);
-                    var outline = plate.gameObject.AddComponent<Outline>();
-                    outline.effectColor = new Color(0.75f, 0.84f, 0.93f, 0.55f);
-                    outline.effectDistance = new Vector2(1.5f, -1.5f);
-                    if (node.Type == NodeType.Destination)
+                    if (node.Type == NodeType.Source || node.Type == NodeType.Destination)
                     {
-                        destinationPlates.Add(node.Id, plate);
-                        destinationOutlines.Add(node.Id, outline);
+                        var station = nodeRoot.gameObject.AddComponent<StationView>();
+                        station.Build(nodeRoot, font, node, text, isRightToLeft);
+                        stations.Add(node.Id, station);
                     }
-                    string icon = node.Type == NodeType.Destination ? text.Text(node.Accepts + "Symbol")
-                        : node.Type == NodeType.Source ? text.Text("sourceIcon") : ">";
-                    var iconText = UIFactory.Text("Node icon", plate.transform, font, icon, 20,
-                        Color.white, TextAlignmentOptions.Center, isRightToLeft, true);
-                    iconText.fontSize = node.Type == NodeType.Source ? 14 : 23;
-                    UIFactory.Stretch(iconText.rectTransform, 3, 3);
+                    else
+                    {
+                        var roller = UIFactory.Circle("Transfer roller", nodeRoot, UIFactory.Steel);
+                        ((RectTransform)roller.transform).sizeDelta = new Vector2(42, 42);
+                        var hub = UIFactory.Circle("Roller hub", roller.transform, UIFactory.SteelLight);
+                        ((RectTransform)hub.transform).sizeDelta = new Vector2(14, 14);
+                    }
                     caption = UIFactory.Text("Node label", nodeRoot, font, "", 10, UIFactory.Muted,
                         TextAlignmentOptions.Center, isRightToLeft, true);
                 }
                 var labelRect = caption.rectTransform;
                 labelRect.anchorMin = labelRect.anchorMax = new Vector2(0.5f, 0.5f);
                 labelRect.sizeDelta = new Vector2(node.Type == NodeType.Destination ? 72 : 86, 18);
-                labelRect.anchoredPosition = new Vector2(0, -(NodeSize * 0.5f + 12));
+                labelRect.anchoredPosition = new Vector2(0, -(UIFactory.BoardNodeSize * 0.5f + 12));
                 nodeLabels.Add(node.Id, caption);
             }
+            crossingLayer.SetAsLastSibling();
+            foreach (var node in nodeTransforms.Values) node.SetAsLastSibling();
             packageLayer.SetAsLastSibling();
             lastSize = Vector2.zero;
             Reflow();
-            SetSwitches(state.Switches);
+            SetSwitches(state.Switches, false);
             UpdateDestinations(state);
             RenderPackages(state);
         }
@@ -141,10 +150,11 @@ namespace PulseFactory.Presentation
         {
             if (result == null) throw new ArgumentNullException(nameof(result));
             currentState = result.State;
-            SetSwitches(result.State.Switches);
             var moves = result.Events.Where(e => e.Type == EventType.Moved).ToArray();
-            if (duration <= 0 || moves.Length == 0)
+            bool pulse = result.Events.Any(e => e.Type == EventType.SwitchToggled);
+            if (duration <= 0)
             {
+                SetSwitches(result.State.Switches, false);
                 RenderPackages(result.State);
                 yield break;
             }
@@ -152,6 +162,15 @@ namespace PulseFactory.Presentation
             presenting = true;
             try
             {
+                SetSwitches(result.State.Switches, true);
+                float signalDuration = pulse ? Mathf.Min(UIFactory.PulseSignalSeconds, duration * 0.4f) : 0f;
+                if (signalDuration > 0) yield return new WaitForSecondsRealtime(signalDuration);
+                if (moves.Length == 0)
+                {
+                    RenderPackages(result.State);
+                    yield break;
+                }
+
                 ClearPackages();
                 var views = new Dictionary<string, PackageView>();
                 foreach (var move in moves)
@@ -164,21 +183,24 @@ namespace PulseFactory.Presentation
                     .Select(e => e.PackageId), StringComparer.Ordinal);
 
                 float elapsed = 0;
-                while (elapsed < duration)
+                float movementDuration = Mathf.Max(0.01f, duration - signalDuration);
+                while (elapsed < movementDuration)
                 {
                     elapsed += Time.unscaledDeltaTime;
-                    float fraction = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / duration));
+                    float fraction = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / movementDuration));
                     foreach (var move in moves)
                     {
                         var view = views[move.PackageId];
                         view.SetPosition(Vector2.Lerp(Position(move.From), Position(move.To), fraction));
                         view.SetTravel(fraction);
-                        if (delivered.Contains(move.PackageId) && elapsed > duration * 0.72f)
-                            view.SetDelivery(Mathf.Clamp01((elapsed - duration * 0.72f) / (duration * 0.28f)));
+                        if (delivered.Contains(move.PackageId) && elapsed > movementDuration * 0.72f)
+                            view.SetDelivery(Mathf.Clamp01((elapsed - movementDuration * 0.72f) / (movementDuration * 0.28f)));
                     }
                     yield return null;
                 }
                 RenderPackages(result.State);
+                foreach (var delivery in result.Events.Where(e => e.Type == EventType.Delivered))
+                    if (stations.TryGetValue(delivery.To, out var station)) station.SetDelivered(true, !reducedMotion);
             }
             finally { presenting = false; }
         }
@@ -216,9 +238,10 @@ namespace PulseFactory.Presentation
             {
                 var start = Point(segment.Edge.From);
                 var end = Point(segment.Edge.To);
-                segment.View.Layout(start, end, 24, engine.Route(nodes.First(n => n.Id == segment.Edge.From),
+                segment.View.Layout(start, end, UIFactory.ConveyorThickness, engine.Route(nodes.First(n => n.Id == segment.Edge.From),
                     currentState.Switches) == segment.Edge.To);
             }
+            RebuildBridges(Point);
             UpdateNodeLabels();
             if (currentState != null) RenderPackages(currentState);
         }
@@ -236,19 +259,27 @@ namespace PulseFactory.Presentation
                     : node.Type == NodeType.Destination ? text.Text(node.Accepts)
                     : text.Text(key);
                 nodeLabels[node.Id].text = label;
-                nodeLabels[node.Id].isRightToLeftText = text.RightToLeft;
+                UIFactory.SetTextDirection(nodeLabels[node.Id], text.RightToLeft);
             }
         }
 
-        private void SetSwitches(SwitchState switches)
+        private void SetSwitches(SwitchState switches, bool animate)
         {
-            foreach (var diverter in diverters.Values) diverter.SetState(switches, text, !reducedMotion);
+            foreach (var pair in diverters)
+            {
+                var node = engine.Level.Nodes.First(item => item.Id == pair.Key);
+                pair.Value.SetState(switches, text, animate && !reducedMotion);
+                var route = engine.Route(node, switches);
+                pair.Value.SetRoute(nodeTransforms[route].anchoredPosition - nodeTransforms[node.Id].anchoredPosition,
+                    animate && !reducedMotion);
+            }
             if (engine != null)
                 foreach (var segment in conveyors)
                 {
                     var from = engine.Level.Nodes.First(node => node.Id == segment.Edge.From);
-                    segment.View.SetActive(engine.Route(from, switches) == segment.Edge.To);
+                    segment.View.SetActive(engine.Route(from, switches) == segment.Edge.To, animate && !reducedMotion);
                 }
+            UpdateBridgeStates(switches);
         }
 
         private Vector2 Position(string nodeId) => nodeTransforms[nodeId].anchoredPosition;
@@ -279,12 +310,9 @@ namespace PulseFactory.Presentation
                 .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
             foreach (var node in engine.Level.Nodes)
             {
-                if (!destinationPlates.TryGetValue(node.Id, out var plate)) continue;
+                if (!stations.TryGetValue(node.Id, out var station)) continue;
                 bool delivered = completed.TryGetValue(node.Id, out int count) && count >= node.RequiredCount;
-                plate.color = delivered ? new Color(0.16f, 0.43f, 0.36f) : DestinationColor(node.Accepts);
-                destinationOutlines[node.Id].effectColor = delivered
-                    ? new Color(UIFactory.Mint.r, UIFactory.Mint.g, UIFactory.Mint.b, 0.95f)
-                    : new Color(0.75f, 0.84f, 0.93f, 0.55f);
+                station.SetDelivered(delivered, false);
             }
         }
 
@@ -294,12 +322,17 @@ namespace PulseFactory.Presentation
                 if (node != null) Destroy(node.gameObject);
             foreach (var segment in conveyors)
                 if (segment.View != null) Destroy(segment.View.gameObject);
+            if (crossingLayer != null)
+            {
+                Destroy(crossingLayer.gameObject);
+                crossingLayer = null;
+            }
             nodeTransforms.Clear();
             nodeLabels.Clear();
-            destinationPlates.Clear();
-            destinationOutlines.Clear();
+            stations.Clear();
             diverters.Clear();
             conveyors.Clear();
+            bridges.Clear();
             ClearPackages();
         }
 
@@ -310,7 +343,77 @@ namespace PulseFactory.Presentation
                 Destroy(packageLayer.GetChild(i).gameObject);
         }
 
-        private static Color DestinationColor(string kind) => kind == "red"
-            ? new Color(0.42f, 0.19f, 0.23f) : new Color(0.16f, 0.3f, 0.48f);
+        private void RebuildBridges(Func<string, Vector2> point)
+        {
+            if (crossingLayer == null) return;
+            for (int i = crossingLayer.childCount - 1; i >= 0; i--)
+                Destroy(crossingLayer.GetChild(i).gameObject);
+            bridges.Clear();
+            for (int first = 0; first < conveyors.Count; first++)
+                for (int second = first + 1; second < conveyors.Count; second++)
+                {
+                    var lower = conveyors[first].Edge;
+                    var upper = conveyors[second].Edge;
+                    if (lower.From == upper.From || lower.From == upper.To
+                        || lower.To == upper.From || lower.To == upper.To) continue;
+                    if (!TryGetSegmentIntersection(point(lower.From), point(lower.To),
+                        point(upper.From), point(upper.To), out var crossing)) continue;
+
+                    var root = UIFactory.Rect("Non-junction overpass", crossingLayer,
+                        new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                        new Vector2(0.5f, 0.5f), new Vector2(40, 22), crossing);
+                    var bridge = UIFactory.Image("Raised bridge housing", root, UIFactory.Steel, true);
+                    UIFactory.Stretch((RectTransform)bridge.transform);
+                    UIFactory.Shadow(bridge, new Color(0, 0, 0, 0.5f), new Vector2(0, -1), 3);
+                    var bridgeOutline = bridge.gameObject.AddComponent<Outline>();
+                    bridgeOutline.effectColor = UIFactory.SteelLight;
+                    bridgeOutline.effectDistance = new Vector2(1, -1);
+                    var track = UIFactory.Image("Bridge tread", root, UIFactory.BeltSurface, true);
+                    UIFactory.Stretch((RectTransform)track.transform, 4, 4);
+                    var route = UIFactory.Image("Bridge live route", root, UIFactory.Muted, true);
+                    var routeRect = (RectTransform)route.transform;
+                    routeRect.anchorMin = new Vector2(0.2f, 0.5f);
+                    routeRect.anchorMax = new Vector2(0.78f, 0.5f);
+                    routeRect.sizeDelta = new Vector2(0, 2);
+                    routeRect.anchoredPosition = Vector2.zero;
+                    var layout = ConveyorView.CalculateLayout(point(upper.From), point(upper.To));
+                    root.localRotation = Quaternion.Euler(0, 0, layout.AngleDegrees);
+                    bridges.Add((upper, root, route));
+                }
+            UpdateBridgeStates(currentState.Switches);
+        }
+
+        private void UpdateBridgeStates(SwitchState switches)
+        {
+            foreach (var bridge in bridges)
+            {
+                var from = engine.Level.Nodes.First(node => node.Id == bridge.Edge.From);
+                bool selected = engine.Route(from, switches) == bridge.Edge.To;
+                bridge.Route.color = selected ? UIFactory.Mint : new Color(0.45f, 0.53f, 0.59f, 0.72f);
+            }
+        }
+
+        internal static bool TryGetSegmentIntersection(Vector2 a, Vector2 b, Vector2 c, Vector2 d,
+            out Vector2 intersection)
+        {
+            Vector2 first = b - a;
+            Vector2 second = d - c;
+            float denominator = first.x * second.y - first.y * second.x;
+            if (Mathf.Abs(denominator) < 0.001f)
+            {
+                intersection = Vector2.zero;
+                return false;
+            }
+            Vector2 offset = c - a;
+            float alongFirst = (offset.x * second.y - offset.y * second.x) / denominator;
+            float alongSecond = (offset.x * first.y - offset.y * first.x) / denominator;
+            if (alongFirst <= 0.1f || alongFirst >= 0.9f || alongSecond <= 0.1f || alongSecond >= 0.9f)
+            {
+                intersection = Vector2.zero;
+                return false;
+            }
+            intersection = a + first * alongFirst;
+            return true;
+        }
     }
 }

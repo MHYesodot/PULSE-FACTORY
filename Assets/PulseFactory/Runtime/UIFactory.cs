@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,6 +19,15 @@ namespace PulseFactory.UI
         internal static readonly Color Red = new Color(1f, 0.36f, 0.38f);
         internal static readonly Color Blue = new Color(0.28f, 0.63f, 1f);
         internal static readonly Color Amber = new Color(1f, 0.75f, 0.31f);
+        internal static readonly Color Steel = new Color(0.28f, 0.37f, 0.45f);
+        internal static readonly Color SteelLight = new Color(0.58f, 0.69f, 0.76f);
+        internal static readonly Color BeltSurface = new Color(0.065f, 0.1f, 0.14f);
+        internal static readonly Color BeltActive = new Color(0.18f, 0.43f, 0.37f);
+        internal static readonly Color Brass = new Color(0.84f, 0.61f, 0.3f);
+        internal const float BoardNodeSize = 52f;
+        internal const float ConveyorThickness = 30f;
+        internal const float PackageSize = 42f;
+        internal const float PulseSignalSeconds = 0.12f;
         private static Sprite roundedSprite;
         private static Sprite circleSprite;
         private static Sprite starSprite;
@@ -221,11 +231,29 @@ namespace PulseFactory.UI
             text.color = color;
             text.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
             text.alignment = alignment;
-            text.isRightToLeftText = rtl;
+            SetTextDirection(text, rtl);
             text.textWrappingMode = TextWrappingModes.Normal;
             text.overflowMode = TextOverflowModes.Ellipsis;
             text.raycastTarget = false;
             return text;
+        }
+
+        internal static void SetTextDirection(TMP_Text text, bool localeIsRightToLeft)
+        {
+            if (text == null) throw new ArgumentNullException(nameof(text));
+            text.isRightToLeftText = IsRightToLeftContent(text.text, localeIsRightToLeft);
+        }
+
+        internal static bool IsRightToLeftContent(string value, bool localeIsRightToLeft)
+        {
+            if (string.IsNullOrEmpty(value)) return localeIsRightToLeft;
+            foreach (char character in value)
+            {
+                if (character >= '\u0590' && character <= '\u08ff') return true;
+                if ((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z'))
+                    return false;
+            }
+            return localeIsRightToLeft;
         }
 
         internal static Button Button(string name, Transform parent, TMP_FontAsset font, string text,
@@ -276,7 +304,7 @@ namespace PulseFactory.UI
         {
             if (EventSystem.current != null) return;
             var eventSystem = new GameObject("Event System", typeof(EventSystem), typeof(StandaloneInputModule));
-            Object.DontDestroyOnLoad(eventSystem);
+            UnityEngine.Object.DontDestroyOnLoad(eventSystem);
         }
 
         internal static Color WithAlpha(Color color, float alpha)

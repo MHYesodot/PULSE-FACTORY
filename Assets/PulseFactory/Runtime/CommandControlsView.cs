@@ -52,6 +52,23 @@ namespace PulseFactory.Presentation
                 rect.anchorMin = new Vector2(left, 0.145f);
                 rect.anchorMax = new Vector2(left + 0.29f, 0.255f);
                 rect.offsetMin = rect.offsetMax = Vector2.zero;
+                var commandAccent = i == 0 ? UIFactory.Mint : i == 1 ? UIFactory.Purple : UIFactory.Blue;
+                var collar = UIFactory.Circle("Command key collar", button.transform,
+                    new Color(commandAccent.r, commandAccent.g, commandAccent.b, 0.17f));
+                var collarRect = (RectTransform)collar.transform;
+                collarRect.anchorMin = collarRect.anchorMax = new Vector2(0.5f, 0.67f);
+                collarRect.sizeDelta = new Vector2(35, 35);
+                collarRect.anchoredPosition = Vector2.zero;
+                var icon = UIFactory.Text("Command key symbol", button.transform, font,
+                    i == 0 ? ">" : i == 1 ? "A+" : "B+", 19, commandAccent,
+                    TextAlignmentOptions.Center, false, true);
+                icon.rectTransform.anchorMin = new Vector2(0.12f, 0.48f);
+                icon.rectTransform.anchorMax = new Vector2(0.88f, 0.88f);
+                icon.rectTransform.offsetMin = icon.rectTransform.offsetMax = Vector2.zero;
+                var label = button.GetComponentInChildren<TMP_Text>();
+                label.rectTransform.anchorMin = new Vector2(0.05f, 0.06f);
+                label.rectTransform.anchorMax = new Vector2(0.95f, 0.49f);
+                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
                 commands.Add(command, button);
             }
 
@@ -110,8 +127,11 @@ namespace PulseFactory.Presentation
         {
             var text = button.GetComponentInChildren<TMP_Text>();
             text.text = value;
-            text.isRightToLeftText = rightToLeft;
-            text.fontSize = value.Length > 16 ? 10 : 13;
+            UIFactory.SetTextDirection(text, rightToLeft);
+            text.fontSize = value.Length > 16 ? 11 : 13;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 11;
+            text.fontSizeMax = 15;
         }
     }
 }

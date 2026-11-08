@@ -1,24 +1,59 @@
-# PULSE FACTORY — Phase 3: UX/UI Polish Vertical Slice
+# PULSE FACTORY — Phase 4A: Miniature Industrial Art Direction
 
 A deterministic, turn-based conveyor-puzzle vertical slice with eight authored
 levels, local progression, anonymous aggregate playtest statistics, and
-English/Hebrew UI. Phase 3 polishes the retained level-selection and gameplay
-screens without changing simulation or progression semantics.
+English/Hebrew UI. Phase 4A builds on the retained uGUI/TextMeshPro foundation
+to give Level 2 a coherent, mechanically readable visual treatment without
+changing simulation or progression semantics.
 
-## Status
+## Phase 4A status
 
-Unity 6000.0.62f1 imports and compiles the project. The retained uGUI/TextMeshPro
-interface now has a stronger level-card hierarchy, a larger board, clearer
-package/route/switch indicators, touch-sized command controls, and terminal
-feedback. The Phase 3 regression results and portrait 540×960 Unity test-player
-screenshots are recorded below. They confirm rendered UI and the tested
-gameplay paths; they are not an iPhone/device test or a claim of commercial
-readiness. Hebrew support remains basic RTL text handling, not full bidi.
+The [visual specification](Assets/PulseFactory/Design/VisualIdentity.md)
+defines shared palette, component anatomy, typography, spacing, accessibility,
+and motion principles. Runtime-built components now present raised conveyors,
+a non-junction bridge at path crossings, rotary shared-control diverters,
+loading ports, receiving docks, crate-like packages, operator-style command
+keys, and a level-specific victory reveal. The language switch shows the
+other-language name in the correct direction; Hebrew counters keep numeric
+values in separate left-to-right text elements.
 
-**iOS is an open gate:** this Editor has no iOS Build Support module. No Xcode
-project was generated, no iOS build was executed, and no device was tested.
-There are no backend, accounts, ads, purchases, multiplayer, or network
-dependencies.
+These are stylized procedural UI graphics, not commissioned or production
+artwork. The board remains a 2D deterministic graph. Screenshots below show
+actual 540×960 portrait Unity StandaloneOSX test-player output and include the
+Development Build watermark. They are not an iPhone or manual-touch test.
+English/Hebrew presentation is practical RTL support, not full bidirectional
+text layout. iOS remains unvalidated: the configured Editor has no iOS Build
+Support module, and no Xcode project or device build was produced.
+
+| Phase 4A verification | Total | Passed | Failed | Skipped | Environment |
+|---|---:|---:|---:|---:|---|
+| Shared .NET regressions | 67 | 67 | 0 | 0 | .NET 8.0.427 |
+| Unity Edit Mode | 68 | 68 | 0 | 0 | Unity 6000.0.62f1, batch/null graphics |
+| Unity Play Mode | 16 | 16 | 0 | 0 | Unity 6000.0.62f1, batch mode |
+| Rendered screenshot flow | 1 | 1 | 0 | 0 | Unity StandaloneOSX test player, macOS |
+
+Level 1’s four-command victory, Level 2’s shared switch activation and
+`PULSE A → MOVE` solution, language-direction regression, and Level 2 bridge
+presence are covered by automated checks. The captures were visually reviewed
+for board/readability and gameplay presentation. Physical touch, iPhone safe
+areas, production build quality, and human preference remain open gates.
+
+## Phase 4A screenshots
+
+| Screen/state | Screenshot |
+|---|---|
+| Level selection with completion states | [01-level-selection.png](Artifacts/Phase4AScreenshots/01-level-selection.png) |
+| Level 1 gameplay, Hebrew | [02-gameplay-hebrew.png](Artifacts/Phase4AScreenshots/02-gameplay-hebrew.png) |
+| Level 1 gameplay, English | [03-gameplay-english.png](Artifacts/Phase4AScreenshots/03-gameplay-english.png) |
+| Level 1 victory | [04-victory.png](Artifacts/Phase4AScreenshots/04-victory.png) |
+| Level 2 before Pulse A, English | [05-gameplay-level-two.png](Artifacts/Phase4AScreenshots/05-gameplay-level-two.png) |
+| Progressed level selection | [06-level-selection-progress.png](Artifacts/Phase4AScreenshots/06-level-selection-progress.png) |
+| Level 2 after Pulse A, synchronized diverters | [07-level-two-after-pulse.png](Artifacts/Phase4AScreenshots/07-level-two-after-pulse.png) |
+| Package moving through the Level 2 network | [08-package-moving.png](Artifacts/Phase4AScreenshots/08-package-moving.png) |
+| Level 2 gameplay, Hebrew/mixed identifiers | [09-level-two-hebrew.png](Artifacts/Phase4AScreenshots/09-level-two-hebrew.png) |
+
+The Phase 3 captures remain available in [Artifacts/Phase3Screenshots](Artifacts/Phase3Screenshots)
+for a before/after comparison.
 
 ## Phase 3 screenshots
 
@@ -86,6 +121,7 @@ separate iOS build instructions below.
 | [`Assets/PulseFactory/Core`](Assets/PulseFactory/Core) | Immutable simulation, level validation/catalog, and bounded shortest-solution solver |
 | [`Assets/PulseFactory/Services`](Assets/PulseFactory/Services) | Local progression, aggregate playtest statistics, and localization; no Unity API dependency |
 | [`Assets/PulseFactory/Runtime`](Assets/PulseFactory/Runtime) | Retained uGUI/TMP controls, board and package views, input lockout, and safe-area layout |
+| [`Assets/PulseFactory/Design/VisualIdentity.md`](Assets/PulseFactory/Design/VisualIdentity.md) | Shared Phase 4A palette, component, typography, layout, and motion specification |
 | [`Assets/PulseFactory/Editor`](Assets/PulseFactory/Editor) | Scene validation, macOS build, and static bilingual font generation |
 | [`Assets/Resources/Levels`](Assets/Resources/Levels) | Eight data-authored levels, catalog, and intended command sequences |
 | [`Assets/Resources/Localization`](Assets/Resources/Localization) | English/Hebrew UI and level strings with synchronized keys/placeholders |
@@ -96,7 +132,7 @@ separate iOS build instructions below.
 Core and Services have `noEngineReferences` assembly definitions. Runtime
 references both plus Unity UI and TextMeshPro; neither domain assembly
 references Runtime. The simulation remains pure C#. The graph and package views
-are prototype geometry rather than final artwork.
+remain stylized procedural geometry rather than production art.
 
 ## Simulation contract
 
@@ -253,12 +289,12 @@ mkdir -p TestResults
 The portrait screenshot flow can be captured in a macOS test player:
 
 ```sh
-mkdir -p Artifacts/Phase3Screenshots
-PULSE_FACTORY_SCREENSHOTS="$PWD/Artifacts/Phase3Screenshots" "$UNITY" \
+mkdir -p Artifacts/Phase4AScreenshots
+PULSE_FACTORY_SCREENSHOTS="$PWD/Artifacts/Phase4AScreenshots" "$UNITY" \
   -batchmode -projectPath "$PWD" -runTests -testPlatform StandaloneOSX \
-  -testFilter PhaseThreeScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo \
-  -testResults "$PWD/TestResults/phase3-visual.xml" \
-  -logFile "$PWD/TestResults/phase3-visual.log"
+  -testFilter PhaseFourAScreensShowLevelSelectionBilingualGameplayVictoryAndLevelTwo \
+  -testResults "$PWD/TestResults/phase4a-visual.xml" \
+  -logFile "$PWD/TestResults/phase4a-visual.log"
 ```
 
 This builds/runs a Unity development test player and adds its watermark to
@@ -336,7 +372,7 @@ compile-only command, signing, deployment, and device checks above have **not**
 been executed. Do not publish, archive for distribution, or configure
 production signing as part of this phase.
 
-## Phase 2 validation record — 2026-11-08
+## Phase 3 validation record — 2026-11-08
 
 Environment: macOS 27.0.1, Apple M1 Pro/arm64; Unity Hub 3.22.6; Unity
 6000.0.62f1 (f99f05b3e950); .NET SDK 8.0.427; Xcode 27.1 with iOS 27.1 SDK.

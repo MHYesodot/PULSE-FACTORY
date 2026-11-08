@@ -120,8 +120,11 @@ namespace PulseFactory.Presentation
 
         public void SetExportResult(string key) => levelSelection.RefreshExportStatus(text, key);
 
-        public void ShowVictory(int stars, bool finalLevel, bool canAdvance) =>
-            outcome.ShowVictory(stars, finalLevel, canAdvance, text, !gameplayReducedMotion);
+        public void ShowVictory(LevelCatalogEntry entry, int stars, bool finalLevel, bool canAdvance)
+        {
+            string levelLabel = text.Text("completedLevel", entry.Number, text.Text(entry.TitleKey));
+            outcome.ShowVictory(levelLabel, stars, finalLevel, canAdvance, text, !gameplayReducedMotion);
+        }
 
         public void ShowFailure(string key) => outcome.ShowFailure(key, text, !gameplayReducedMotion);
 
@@ -186,9 +189,8 @@ namespace PulseFactory.Presentation
 
         private void RefreshLocale()
         {
-            var language = text.Locale == "en" ? "languageHebrew" : "languageEnglish";
-            SetLanguageButton(menuLanguage, text.Text(language), text.Locale == "en");
-            SetLanguageButton(gameLanguage, text.Text(language), text.Locale == "en");
+            SetLanguageButton(menuLanguage, text.Text("languageToggle"), text.RightToLeft);
+            SetLanguageButton(gameLanguage, text.Text("languageToggle"), text.RightToLeft);
             levelSelection.Refresh(text, menuSave, menuReducedMotion, exportResultKey);
             board.SetLocalization(text);
             hud.SetLocalization(text);
@@ -199,7 +201,7 @@ namespace PulseFactory.Presentation
         {
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
-            label.isRightToLeftText = valueIsRightToLeft;
+            UIFactory.SetTextDirection(label, valueIsRightToLeft);
             label.fontSize = 12;
         }
     }

@@ -12,6 +12,7 @@ namespace PulseFactory.Presentation
         private RectTransform root;
         private RectTransform cardTransform;
         private TMP_Text title;
+        private TMP_Text levelContext;
         private TMP_Text message;
         private readonly Image[] starImages = new Image[3];
         private Button retry;
@@ -26,6 +27,9 @@ namespace PulseFactory.Presentation
         private string failureKey;
         private bool animateIn;
         private bool reducedMotion;
+        private string completedLevel;
+        private bool revealStars;
+        private float starRevealStarted;
 
         public void Build(RectTransform parent, TMP_FontAsset fontAsset, Action onRetry,
             Action onNext, Action onLevels)
@@ -58,19 +62,24 @@ namespace PulseFactory.Presentation
             title.enableAutoSizing = true;
             title.fontSizeMin = 18;
             title.fontSizeMax = 25;
+            levelContext = UIFactory.Text("Completed level context", card.transform, font, "", 12,
+                UIFactory.Muted, TextAlignmentOptions.Center, false, true);
+            levelContext.rectTransform.anchorMin = new Vector2(0.08f, 0.67f);
+            levelContext.rectTransform.anchorMax = new Vector2(0.92f, 0.76f);
+            levelContext.rectTransform.offsetMin = levelContext.rectTransform.offsetMax = Vector2.zero;
             for (int i = 0; i < starImages.Length; i++)
             {
                 starImages[i] = UIFactory.Star("Outcome star " + (i + 1), card.transform,
                     new Color(0.33f, 0.4f, 0.49f));
                 var starRect = (RectTransform)starImages[i].transform;
-                starRect.anchorMin = starRect.anchorMax = new Vector2(0.38f + i * 0.12f, 0.66f);
-                starRect.sizeDelta = new Vector2(26, 26);
+                starRect.anchorMin = starRect.anchorMax = new Vector2(0.38f + i * 0.12f, 0.57f);
+                starRect.sizeDelta = new Vector2(30, 30);
                 starRect.anchoredPosition = Vector2.zero;
             }
             message = UIFactory.Text("Outcome message", card.transform, font, "", 15,
                 UIFactory.Muted, TextAlignmentOptions.Center, false, true);
-            message.rectTransform.anchorMin = new Vector2(0.08f, 0.37f);
-            message.rectTransform.anchorMax = new Vector2(0.92f, 0.61f);
+            message.rectTransform.anchorMin = new Vector2(0.08f, 0.36f);
+            message.rectTransform.anchorMax = new Vector2(0.92f, 0.52f);
             message.rectTransform.offsetMin = message.rectTransform.offsetMax = Vector2.zero;
             message.enableAutoSizing = true;
             message.fontSizeMin = 12;
@@ -82,11 +91,12 @@ namespace PulseFactory.Presentation
             root.gameObject.SetActive(false);
         }
 
-        public void ShowVictory(int achievedStars, bool isFinalLevel, bool canAdvance, LocalizationCatalog text,
-            bool animate)
+        public void ShowVictory(string levelLabel, int achievedStars, bool isFinalLevel, bool canAdvance,
+            LocalizationCatalog text, bool animate)
         {
             hasOutcome = true;
             victory = true;
+            completedLevel = levelLabel;
             finalLevel = isFinalLevel;
             nextAvailable = canAdvance;
             stars = achievedStars;
@@ -108,6 +118,7 @@ namespace PulseFactory.Presentation
         public void Hide()
         {
             animateIn = false;
+            revealStars = false;
             root.gameObject.SetActive(false);
         }
 
@@ -123,7 +134,11 @@ namespace PulseFactory.Presentation
             if (root == null || !hasOutcome) return;
             title.text = text.Text(victory ? finalLevel ? "allComplete" : "levelComplete" : "failedTitle");
             message.text = victory ? text.Text("victory", stars) : text.Text(failureKey);
-            title.isRightToLeftText = message.isRightToLeftText = text.RightToLeft;
+            levelContext.text = victory ? completedLevel : "";
+            levelContext.gameObject.SetActive(victory);
+            UIFactory.SetTextDirection(title, text.RightToLeft);
+            UIFactory.SetTextDirection(message, text.RightToLeft);
+            UIFactory.SetTextDirection(levelContext, text.RightToLeft);
             SetButton(retry, text.Text(victory ? "playAgain" : "tryAgain"), text.RightToLeft);
             SetButton(next, text.Text("nextLevel"), text.RightToLeft);
             SetButton(levels, text.Text("back"), text.RightToLeft);
@@ -137,6 +152,7 @@ namespace PulseFactory.Presentation
             {
                 starImages[i].gameObject.SetActive(victory);
                 starImages[i].color = i < stars ? UIFactory.Amber : new Color(0.33f, 0.4f, 0.49f, 0.55f);
+                if (!animateIn) starImages[i].rectTransform.localScale = Vector3.one;
             }
             var accentImage = cardTransform.Find("Outcome accent").GetComponent<Image>();
             accentImage.color = victory ? UIFactory.Mint : UIFactory.Amber;
@@ -174,17 +190,37 @@ namespace PulseFactory.Presentation
         {
             cardTransform.localScale = animate ? Vector3.one * 0.92f : Vector3.one;
             animateIn = animate;
+            revealStars = animate && victory;
+            starRevealStarted = Time.unscaledTime;
+            for (int i = 0; i < starImages.Length; i++)
+                starImages[i].rectTransform.localScale = animate && victory ? Vector3.one * 0.25f : Vector3.one;
         }
 
         private void Update()
         {
-            if (!animateIn) return;
-            cardTransform.localScale = Vector3.Lerp(cardTransform.localScale, Vector3.one,
-                1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
-            if ((cardTransform.localScale - Vector3.one).sqrMagnitude < 0.0001f)
+            if (animateIn)
             {
-                cardTransform.localScale = Vector3.one;
-                animateIn = false;
+                cardTransform.localScale = Vector3.Lerp(cardTransform.localScale, Vector3.one,
+                    1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+                if ((cardTransform.localScale - Vector3.one).sqrMagnitude < 0.0001f)
+                {
+                    cardTransform.localScale = Vector3.one;
+                    animateIn = false;
+                }
+            }
+            if (revealStars)
+            {
+                for (int i = 0; i < starImages.Length; i++)
+                {
+                    float progress = Mathf.Clamp01((Time.unscaledTime - starRevealStarted - i * 0.1f) / 0.2f);
+                    float pop = Mathf.Sin(progress * Mathf.PI) * 0.22f;
+                    starImages[i].rectTransform.localScale = Vector3.one * (0.25f + progress * 0.75f + pop);
+                }
+                if (Time.unscaledTime - starRevealStarted > 0.5f)
+                {
+                    revealStars = false;
+                    foreach (var star in starImages) star.rectTransform.localScale = Vector3.one;
+                }
             }
         }
 
@@ -192,7 +228,7 @@ namespace PulseFactory.Presentation
         {
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = value;
-            label.isRightToLeftText = rtl;
+            UIFactory.SetTextDirection(label, rtl);
             label.fontSize = value.Length > 14 ? 11 : 14;
         }
     }
