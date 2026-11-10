@@ -5,6 +5,10 @@ Control**. The existing UI board remains available, is kept synchronized, and
 continues to render every other level. The simulation, level JSON, routing
 rules, progression, and save semantics are unchanged.
 
+The follow-up framing fix and fresh portrait evidence are documented in
+[Phase 4D.1 — Mechanical Board Framing](../Phase4D1Framing/README.md). The
+captures and framing comments below describe the original Phase 4D baseline.
+
 ## What is included
 
 - Four Unity-imported Blender FBX models in
@@ -80,11 +84,11 @@ RenderTexture into PNGs; these are not Blender renders or device screenshots.
 - [Victory](./Screenshots-360/04-victory.png)
 
 The screenshots were visually inspected at both sizes. They establish the
-Unity Canvas/board composition and localization, but not final iPhone behavior.
-The 1080×1920 package-motion capture still crowds/crops the board's end
-stations after Pulse A; changing the camera margin did not remove the mismatch
-between that active-state capture and the resting frame. The camera adjustment
-was reverted rather than making the resting/mobile board unnecessarily small.
+original Unity Canvas/board composition and localization, but not final iPhone
+behavior. The 1080×1920 package-motion capture in this Phase 4D baseline
+crowded/cropped the board's end stations after Pulse A. Phase 4D.1 fixed the
+Canvas-dependent world scaling and added fresh state captures; see its report
+for the updated framing evidence and remaining mobile-validation gaps.
 
 ## Validation
 
@@ -97,9 +101,9 @@ was reverted rather than making the resting/mobile board unnecessarily small.
 | Focused screenshot test at 360×640 | 1 passed |
 | .NET DomainChecks NUnit tests | 67 passed, 0 failed, 0 skipped |
 
-Unity tests used 6000.0.62f1. The repository's .NET project targets net8.0;
-because only the .NET 10 runtime is installed, its tests were run with
-`DOTNET_ROLL_FORWARD=Major` after restoring the net8 targeting pack.
+Unity tests used 6000.0.62f1. At the time of this original Phase 4D run, the
+repository's .NET project targeted net8.0 and used major-version roll-forward.
+The Phase 4D.1 follow-up ran the checks on the matching .NET 8 SDK/runtime.
 
 The mechanical folder contains 20 non-metadata assets totaling 383,109 bytes.
 An Editor Play Mode measurement counted 462 Unity renderers and averaged
@@ -112,8 +116,8 @@ performance benchmark. iPhone performance and thermals remain unverified.
 ## Remaining gaps
 
 - No standalone/mobile build or physical iPhone test has been performed.
-- The 1080×1920 active-state package-motion frame does not yet keep every board
-  endpoint comfortably in view; this needs a live-device framing pass.
+- The original Phase 4D package-motion framing issue is addressed in the
+  Phase 4D.1 follow-up; native device framing still needs verification.
 - The board is a readable 2.5D proof, not a fully optimized production renderer;
   renderer count, batching, lighting, and shadows need a device profiling pass.
 - Gameplay screenshots use Unity's off-screen Canvas render path in batch tests,

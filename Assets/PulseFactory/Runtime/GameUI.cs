@@ -173,8 +173,8 @@ namespace PulseFactory.Presentation
             var boardFrame = UIFactory.Image("Board frame", parent, UIFactory.Panel, true);
             UIFactory.Shadow(boardFrame, new Color(0, 0, 0, 0.35f), new Vector2(0, -2), 8);
             var frameRect = (RectTransform)boardFrame.transform;
-            frameRect.anchorMin = new Vector2(0.035f, 0.305f);
-            frameRect.anchorMax = new Vector2(0.965f, 0.69f);
+            frameRect.anchorMin = new Vector2(0.025f, 0.215f);
+            frameRect.anchorMax = new Vector2(0.975f, 0.77f);
             frameRect.offsetMin = frameRect.offsetMax = Vector2.zero;
             var boardViewport = UIFactory.Rect("Board viewport", frameRect, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);

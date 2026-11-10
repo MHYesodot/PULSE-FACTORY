@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PulseFactory.Core;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using EventType = PulseFactory.Core.EventType;
 
@@ -16,8 +17,13 @@ namespace PulseFactory.Presentation
         private const float ModuleLength = 0.75f;
         private const float DeckHeight = 0.34f;
         private const float BridgeLift = 0.58f;
-        private const int BoardLayer = 0;
+        private const float CameraDistance = 20f;
+        private const int BoardLayer = 31;
+        private const string BoardLayerName = "Mechanical Board";
         private const string SettingsResource = "PulseFactoryMechanical/MechanicalBoardSettings";
+
+        [SerializeField, Range(0.02f, 0.2f)]
+        private float framingMargin = 0.07f;
 
         private readonly Dictionary<string, Transform> nodes = new Dictionary<string, Transform>(StringComparer.Ordinal);
         private readonly Dictionary<string, Transform> packages = new Dictionary<string, Transform>(StringComparer.Ordinal);
@@ -26,6 +32,7 @@ namespace PulseFactory.Presentation
             new Dictionary<string, List<Renderer>>(StringComparer.Ordinal);
         private readonly Dictionary<string, List<Renderer>> inactiveRoutes =
             new Dictionary<string, List<Renderer>>(StringComparer.Ordinal);
+        private readonly Dictionary<Camera, bool> previousCameraLayerVisibility = new Dictionary<Camera, bool>();
         private RectTransform viewport;
         private RawImage output;
         private Camera boardCamera;
@@ -37,6 +44,11 @@ namespace PulseFactory.Presentation
         private SimulationState state;
         private bool visible;
         private bool reducedMotion;
+        private Bounds boardBounds;
+        private bool hasBoardBounds;
+        private AmbientMode previousAmbientMode;
+        private Color previousAmbientLight;
+        private bool ambientLightingOverridden;
         private float transitionStart;
         private float transitionDuration;
         private readonly List<ArmTransition> armTransitions = new List<ArmTransition>(2);
@@ -50,8 +62,37 @@ namespace PulseFactory.Presentation
         internal RenderTexture RenderTarget => renderTexture;
         internal int RendererCount => boardRoot.GetComponentsInChildren<Renderer>(true).Length;
         internal Vector2 ViewportSize => viewport.rect.size;
+        internal float CameraOrthographicSize => boardCamera.orthographicSize;
+        internal float CameraAspect => boardCamera.aspect;
+        internal Vector3 CameraPosition => boardCamera.transform.position;
+        internal Quaternion CameraRotation => boardCamera.transform.rotation;
+        internal Vector3 CameraTarget => boardRoot.position;
+        internal Bounds BoardBounds => boardBounds;
+        internal float FramingMargin => framingMargin;
+        internal int BoardRenderingLayer => BoardLayer;
+        internal bool IsRenderRigDetached => boardRoot.parent == null
+            && boardCamera.transform.parent == null && keyLight.transform.parent == null;
+        internal RectTransform BoardViewportTransform => viewport;
+        internal Rect ProjectedBoardBounds => ProjectedBounds(boardBounds);
+        internal bool IsBoardWithinSafeViewport => IsBoundsWithinSafeViewport(boardBounds, framingMargin);
+        internal bool AreVisibleObjectsWithinSafeViewport
+        {
+            get
+            {
+                if (!IsBoardWithinSafeViewport) return false;
+                foreach (var renderer in boardRoot.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (IsPackageRenderer(renderer.transform))
+                    {
+                        if (!IsBoundsWithinSafeViewport(renderer.bounds, framingMargin))
+                            return false;
+                    }
+                }
+                return true;
+            }
+        }
         internal string[] ActiveRouteIds => activeRoutes
-            .Where(pair => pair.Value.Any(renderer => renderer != null && renderer.gameObject.activeSelf))
+            .Where(pair => pair.Value.Any(renderer => renderer != null && renderer.enabled))
             .Select(pair => pair.Key).ToArray();
 
         private sealed class ArmTransition
@@ -64,6 +105,8 @@ namespace PulseFactory.Presentation
         public bool Build(RectTransform boardViewport)
         {
             viewport = boardViewport != null ? boardViewport : throw new ArgumentNullException(nameof(boardViewport));
+            if (LayerMask.NameToLayer(BoardLayerName) != BoardLayer)
+                throw new InvalidOperationException("The Mechanical Board layer must remain assigned to layer 31.");
             var settings = Resources.Load<MechanicalBoardSettings>(SettingsResource);
             if (settings == null || !HasRequiredAssets(settings.Assets))
             {
@@ -84,31 +127,30 @@ namespace PulseFactory.Presentation
             outputRect.offsetMax = Vector2.zero;
 
             var cameraObject = new GameObject("Mechanical board camera");
-            cameraObject.transform.SetParent(transform, false);
             boardCamera = cameraObject.AddComponent<Camera>();
             boardCamera.enabled = false;
             boardCamera.orthographic = true;
             boardCamera.orthographicSize = 3.0f;
             boardCamera.clearFlags = CameraClearFlags.SolidColor;
-            boardCamera.backgroundColor = new Color(0.055f, 0.075f, 0.085f);
+            boardCamera.backgroundColor = new Color(0.09f, 0.12f, 0.14f);
             boardCamera.nearClipPlane = 0.05f;
             boardCamera.farClipPlane = 40f;
             boardCamera.cullingMask = 1 << BoardLayer;
             boardCamera.allowHDR = false;
             boardCamera.allowMSAA = false;
+            boardCamera.useOcclusionCulling = false;
             boardCamera.depth = 1;
 
             var lightObject = new GameObject("Mechanical board key light");
-            lightObject.transform.SetParent(transform, false);
             keyLight = lightObject.AddComponent<Light>();
             keyLight.type = LightType.Directional;
-            keyLight.intensity = 1.1f;
+            keyLight.intensity = 1.3f;
             keyLight.color = new Color(1f, 0.91f, 0.79f);
-            keyLight.shadows = LightShadows.Soft;
+            keyLight.shadows = LightShadows.None;
+            keyLight.cullingMask = 1 << BoardLayer;
             keyLight.transform.rotation = Quaternion.Euler(38, -28, 0);
 
             boardRoot = new GameObject("Mechanical Level 2 board").transform;
-            boardRoot.SetParent(transform, false);
             boardRoot.gameObject.layer = BoardLayer;
             CreateDeck();
             ConfigureCameraViewport();
@@ -123,6 +165,9 @@ namespace PulseFactory.Presentation
             if (output != null) output.enabled = value;
             if (boardCamera != null) boardCamera.enabled = value;
             if (keyLight != null) keyLight.enabled = value;
+            if (boardRoot != null) boardRoot.gameObject.SetActive(value);
+            SetOtherCameraCulling(value);
+            SetAmbientLighting(value);
         }
 
         public void SetReducedMotion(bool value) => reducedMotion = value;
@@ -139,8 +184,11 @@ namespace PulseFactory.Presentation
             pivots.Clear();
             activeRoutes.Clear();
             inactiveRoutes.Clear();
-            for (int i = boardRoot.childCount - 1; i >= 0; i--)
-                Destroy(boardRoot.GetChild(i).gameObject);
+            var previousBoardRoot = boardRoot;
+            boardRoot = new GameObject("Mechanical Level 2 board").transform;
+            boardRoot.gameObject.layer = BoardLayer;
+            if (previousBoardRoot != null)
+                Destroy(previousBoardRoot.gameObject);
             CreateDeck();
 
             var nodeDefinitions = engine.Level.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
@@ -158,12 +206,14 @@ namespace PulseFactory.Presentation
                 {
                     var pivotObject = new GameObject("Transfer " + node.Id);
                     pivotObject.transform.SetParent(boardRoot, false);
+                    pivotObject.layer = BoardLayer;
                     pivotObject.transform.localPosition = location;
                     nodes.Add(node.Id, pivotObject.transform);
                     continue;
                 }
 
                 var station = Instantiate(prefab, boardRoot);
+                SetLayerRecursively(station, BoardLayer);
                 station.name = node.Type + " " + node.Id;
                 station.transform.localPosition = location;
                 station.transform.localRotation = Quaternion.identity;
@@ -179,9 +229,15 @@ namespace PulseFactory.Presentation
 
             foreach (var edge in engine.Level.Edges)
                 CreateEdge(edge, nodeDefinitions[edge.From]);
+            hasBoardBounds = false;
+            CapturePersistentBoardBounds(new SwitchState(false, false));
+            CapturePersistentBoardBounds(new SwitchState(true, false));
+            CapturePersistentBoardBounds(new SwitchState(false, true));
+            CapturePersistentBoardBounds(new SwitchState(true, true));
             SetRouteState(initialState.Switches, false);
             CreatePackages(initialState);
             ConfigureCameraViewport();
+            FrameCamera();
         }
 
         public IEnumerator Present(SimulationResult result, float duration)
@@ -217,7 +273,10 @@ namespace PulseFactory.Presentation
                 {
                     var definition = engine.Level.Spawns.Select(spawn => spawn.Package)
                         .First(item => item.Id == movement.PackageId);
-                    package = Instantiate(definition.Kind == "red" ? assets.RedPackage : assets.BluePackage, boardRoot).transform;
+                    var packageObject = Instantiate(
+                        definition.Kind == "red" ? assets.RedPackage : assets.BluePackage, boardRoot);
+                    SetLayerRecursively(packageObject, BoardLayer);
+                    package = packageObject.transform;
                     package.name = "Package " + movement.PackageId;
                     package.localPosition = NodePosition(engine.Level.Nodes.First(node => node.Id == movement.From));
                     packages.Add(movement.PackageId, package);
@@ -351,7 +410,8 @@ namespace PulseFactory.Presentation
             SetLayerRecursively(active, BoardLayer);
             Assign(active.GetComponent<Renderer>(), assets.ActiveRoute);
             RemoveCollider(active);
-            active.SetActive(selected);
+            var activeRenderer = active.GetComponent<Renderer>();
+            activeRenderer.enabled = selected;
 
             var inactive = GameObject.CreatePrimitive(PrimitiveType.Cube);
             inactive.name = $"Inactive route {edgeId} {index}";
@@ -361,8 +421,9 @@ namespace PulseFactory.Presentation
             SetLayerRecursively(inactive, BoardLayer);
             Assign(inactive.GetComponent<Renderer>(), assets.InactiveRoute);
             RemoveCollider(inactive);
-            inactive.SetActive(!selected);
-            return (active.GetComponent<Renderer>(), inactive.GetComponent<Renderer>());
+            var inactiveRenderer = inactive.GetComponent<Renderer>();
+            inactiveRenderer.enabled = !selected;
+            return (activeRenderer, inactiveRenderer);
         }
 
         private void SetRouteState(SwitchState switches, bool animate)
@@ -410,7 +471,7 @@ namespace PulseFactory.Presentation
             foreach (var renderer in renderers)
             {
                 if (renderer == null) continue;
-                renderer.gameObject.SetActive(enabled);
+                renderer.enabled = enabled;
                 if (!enabled) continue;
                 renderer.sharedMaterial = material;
             }
@@ -427,6 +488,7 @@ namespace PulseFactory.Presentation
                 if (prefab == null)
                     throw new InvalidOperationException("Missing package prefab for " + package.Package.Kind);
                 var instance = Instantiate(prefab, boardRoot);
+                SetLayerRecursively(instance, BoardLayer);
                 instance.name = "Package " + package.Package.Id;
                 instance.transform.localPosition = NodePosition(engine.Level.Nodes.First(node => node.Id == package.NodeId));
                 packages.Add(package.Package.Id, instance.transform);
@@ -501,9 +563,16 @@ namespace PulseFactory.Presentation
         private void ConfigureCameraViewport()
         {
             if (viewport == null || boardCamera == null || !viewport.gameObject.activeInHierarchy) return;
-            float scale = viewport.GetComponentInParent<Canvas>().scaleFactor;
+            var canvas = viewport.GetComponentInParent<Canvas>();
+            if (canvas == null)
+                throw new InvalidOperationException("The mechanical board viewport must be inside a Canvas.");
+            float scale = canvas.scaleFactor;
             int width = Mathf.Max(64, Mathf.RoundToInt(viewport.rect.width * scale));
             int height = Mathf.Max(64, Mathf.RoundToInt(viewport.rect.height * scale));
+            bool textureChanged = renderTexture == null
+                || renderTexture.width != width
+                || renderTexture.height != height
+                || !renderTexture.IsCreated();
             if (renderTexture == null || renderTexture.width != width || renderTexture.height != height)
             {
                 if (renderTexture != null)
@@ -518,16 +587,173 @@ namespace PulseFactory.Presentation
                     useMipMap = false,
                     autoGenerateMips = false
                 };
-                renderTexture.Create();
+                if (!renderTexture.Create())
+                    throw new InvalidOperationException("Could not allocate the mechanical-board RenderTexture.");
                 boardCamera.targetTexture = renderTexture;
                 output.texture = renderTexture;
             }
-            boardCamera.aspect = (float)width / height;
-            float requiredHeight = Mathf.Max(5.85f, 5.2f) * 0.5f;
-            float requiredWidth = 3.9f * 0.5f / boardCamera.aspect;
-            boardCamera.orthographicSize = Mathf.Max(requiredHeight, requiredWidth) * 1.25f;
-            boardCamera.transform.position = new Vector3(0.18f, 19.5f, -0.65f);
-            boardCamera.transform.rotation = Quaternion.Euler(88, 0, 0);
+            else if (!renderTexture.IsCreated() && !renderTexture.Create())
+                throw new InvalidOperationException("Could not recreate the mechanical-board RenderTexture.");
+
+            float aspect = (float)width / height;
+            bool aspectChanged = !Mathf.Approximately(boardCamera.aspect, aspect);
+            boardCamera.aspect = aspect;
+            if (hasBoardBounds && (textureChanged || aspectChanged))
+                FrameCamera();
+        }
+
+        private void CapturePersistentBoardBounds(SwitchState switches)
+        {
+            SetRouteState(switches, false);
+            var renderers = boardRoot.GetComponentsInChildren<Renderer>(true)
+                .Where(renderer => !IsPackageRenderer(renderer.transform)
+                    && !renderer.name.StartsWith("Active route ", StringComparison.Ordinal)
+                    && !renderer.name.StartsWith("Inactive route ", StringComparison.Ordinal))
+                .ToArray();
+            if (renderers.Length == 0)
+                throw new InvalidOperationException("The mechanical board has no renderable geometry to frame.");
+
+            foreach (var renderer in renderers)
+            {
+                if (!hasBoardBounds)
+                {
+                    boardBounds = renderer.bounds;
+                    hasBoardBounds = true;
+                }
+                else
+                    boardBounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        private void FrameCamera()
+        {
+            if (!hasBoardBounds || boardCamera == null) return;
+
+            Quaternion rotation = Quaternion.Euler(88, 0, 0);
+            Vector3 center = boardRoot.position;
+            boardCamera.orthographicSize = RequiredOrthographicSize(
+                boardBounds, center, rotation, boardCamera.aspect, framingMargin);
+            boardCamera.transform.rotation = rotation;
+            boardCamera.transform.position = center - rotation * Vector3.forward * CameraDistance;
+        }
+
+        internal static float RequiredOrthographicSize(Bounds bounds, Quaternion rotation, float aspect, float margin) =>
+            RequiredOrthographicSize(bounds, bounds.center, rotation, aspect, margin);
+
+        internal static float RequiredOrthographicSize(Bounds bounds, Vector3 target,
+            Quaternion rotation, float aspect, float margin)
+        {
+            if (aspect <= 0 || float.IsNaN(aspect) || float.IsInfinity(aspect))
+                throw new ArgumentOutOfRangeException(nameof(aspect));
+            if (margin < 0 || margin >= 0.5f || float.IsNaN(margin))
+                throw new ArgumentOutOfRangeException(nameof(margin));
+
+            Vector3 right = rotation * Vector3.right;
+            Vector3 up = rotation * Vector3.up;
+            float halfWidth = 0;
+            float halfHeight = 0;
+            foreach (var corner in BoundsCorners(bounds))
+            {
+                Vector3 offset = corner - target;
+                halfWidth = Mathf.Max(halfWidth, Mathf.Abs(Vector3.Dot(offset, right)));
+                halfHeight = Mathf.Max(halfHeight, Mathf.Abs(Vector3.Dot(offset, up)));
+            }
+
+            float usableFraction = 1f - 2f * margin;
+            return Mathf.Max(halfHeight, halfWidth / aspect) / usableFraction;
+        }
+
+        private bool IsBoundsWithinSafeViewport(Bounds bounds, float margin)
+        {
+            if (!hasBoardBounds || boardCamera == null) return false;
+            foreach (var corner in BoundsCorners(bounds))
+            {
+                Vector3 viewportPoint = boardCamera.WorldToViewportPoint(corner);
+                if (viewportPoint.z < boardCamera.nearClipPlane
+                    || viewportPoint.x < margin - 0.002f || viewportPoint.x > 1f - margin + 0.002f
+                    || viewportPoint.y < margin - 0.002f || viewportPoint.y > 1f - margin + 0.002f)
+                    return false;
+            }
+            return true;
+        }
+
+        private Rect ProjectedBounds(Bounds bounds)
+        {
+            Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            foreach (var corner in BoundsCorners(bounds))
+            {
+                Vector3 point = boardCamera.WorldToViewportPoint(corner);
+                min = Vector2.Min(min, point);
+                max = Vector2.Max(max, point);
+            }
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        internal static IEnumerable<Vector3> BoundsCorners(Bounds bounds)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            for (int x = 0; x < 2; x++)
+            for (int y = 0; y < 2; y++)
+            for (int z = 0; z < 2; z++)
+                yield return new Vector3(x == 0 ? min.x : max.x,
+                    y == 0 ? min.y : max.y,
+                    z == 0 ? min.z : max.z);
+        }
+
+        private bool IsPackageRenderer(Transform candidate)
+        {
+            while (candidate != null && candidate != boardRoot)
+            {
+                if (candidate.name.StartsWith("Package ", StringComparison.Ordinal))
+                    return true;
+                candidate = candidate.parent;
+            }
+            return false;
+        }
+
+        private void SetAmbientLighting(bool enabled)
+        {
+            if (enabled)
+            {
+                if (!ambientLightingOverridden)
+                {
+                    previousAmbientMode = RenderSettings.ambientMode;
+                    previousAmbientLight = RenderSettings.ambientLight;
+                    ambientLightingOverridden = true;
+                }
+                RenderSettings.ambientMode = AmbientMode.Flat;
+                RenderSettings.ambientLight = new Color(0.34f, 0.36f, 0.38f);
+            }
+            else if (ambientLightingOverridden)
+            {
+                RenderSettings.ambientMode = previousAmbientMode;
+                RenderSettings.ambientLight = previousAmbientLight;
+                ambientLightingOverridden = false;
+            }
+        }
+
+        private void SetOtherCameraCulling(bool suppressBoardLayer)
+        {
+            if (suppressBoardLayer)
+            {
+                foreach (var camera in FindObjectsByType<Camera>(FindObjectsSortMode.None))
+                {
+                    if (camera == boardCamera || previousCameraLayerVisibility.ContainsKey(camera)) continue;
+                    previousCameraLayerVisibility.Add(camera, (camera.cullingMask & (1 << BoardLayer)) != 0);
+                    camera.cullingMask &= ~(1 << BoardLayer);
+                }
+                return;
+            }
+
+            foreach (var pair in previousCameraLayerVisibility)
+            {
+                if (pair.Key == null) continue;
+                if (pair.Value) pair.Key.cullingMask |= 1 << BoardLayer;
+                else pair.Key.cullingMask &= ~(1 << BoardLayer);
+            }
+            previousCameraLayerVisibility.Clear();
         }
 
         private void LateUpdate()
@@ -574,12 +800,17 @@ namespace PulseFactory.Presentation
 
         private void OnDestroy()
         {
+            SetOtherCameraCulling(false);
+            SetAmbientLighting(false);
             if (boardCamera != null) boardCamera.targetTexture = null;
             if (renderTexture != null)
             {
                 renderTexture.Release();
                 Destroy(renderTexture);
             }
+            if (boardRoot != null) Destroy(boardRoot.gameObject);
+            if (boardCamera != null) Destroy(boardCamera.gameObject);
+            if (keyLight != null) Destroy(keyLight.gameObject);
         }
     }
 }

@@ -27,42 +27,42 @@ namespace PulseFactory.Presentation
             root = UIFactory.Rect("Gameplay HUD", parent, Vector2.zero, Vector2.one,
                 new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             UIFactory.Stretch(root);
-            title = AddText("Level title", 0.89f, 0.96f, 27, UIFactory.White,
+            title = AddText("Level title", 0.94f, 0.98f, 27, UIFactory.White,
                 TextAlignmentOptions.Center, true, 0.04f, 0.75f);
             title.enableAutoSizing = true;
             title.fontSizeMin = 18;
             title.fontSizeMax = 27;
-            levelNumber = AddText("Level number", 0.855f, 0.89f, 12, UIFactory.Muted,
+            levelNumber = AddText("Level number", 0.915f, 0.94f, 12, UIFactory.Muted,
                 TextAlignmentOptions.Center, true);
             var metrics = UIFactory.Image("Gameplay counters panel", root,
                 new Color(0.1f, 0.15f, 0.22f, 0.88f), true);
-            SetAnchors((RectTransform)metrics.transform, 0.795f, 0.845f, 0.055f, 0.945f);
-            beatLabel = AddText("Beat label", 0.795f, 0.845f, 12, UIFactory.Muted,
+            SetAnchors((RectTransform)metrics.transform, 0.86f, 0.905f, 0.055f, 0.945f);
+            beatLabel = AddText("Beat label", 0.86f, 0.905f, 12, UIFactory.Muted,
                 TextAlignmentOptions.MidlineLeft, true, 0.05f, 0.22f);
-            beatValue = AddText("Beat count", 0.795f, 0.845f, 15, UIFactory.White,
+            beatValue = AddText("Beat count", 0.86f, 0.905f, 15, UIFactory.White,
                 TextAlignmentOptions.MidlineRight, false, 0.22f, 0.48f);
-            progressLabel = AddText("Delivery label", 0.795f, 0.845f, 12, UIFactory.Muted,
+            progressLabel = AddText("Delivery label", 0.86f, 0.905f, 12, UIFactory.Muted,
                 TextAlignmentOptions.MidlineLeft, true, 0.52f, 0.72f);
-            progressValue = AddText("Delivery count", 0.795f, 0.845f, 15, UIFactory.Mint,
+            progressValue = AddText("Delivery count", 0.86f, 0.905f, 15, UIFactory.Mint,
                 TextAlignmentOptions.MidlineRight, false, 0.72f, 0.95f);
             var switchPanel = UIFactory.Image("Switch status panel", root,
                 new Color(0.17f, 0.14f, 0.27f, 0.82f), true);
-            SetAnchors((RectTransform)switchPanel.transform, 0.75f, 0.79f, 0.17f, 0.83f);
-            switches = AddText("Switch status", 0.75f, 0.79f, 13, UIFactory.Purple,
+            SetAnchors((RectTransform)switchPanel.transform, 0.825f, 0.85f, 0.17f, 0.83f);
+            switches = AddText("Switch status", 0.825f, 0.85f, 13, UIFactory.Purple,
                 TextAlignmentOptions.Center, true, 0.18f, 0.82f);
-            instructions = AddText("Level instructions", 0.695f, 0.75f, 14, UIFactory.White,
+            instructions = AddText("Level instructions", 0.78f, 0.82f, 12, UIFactory.White,
                 TextAlignmentOptions.Center, true, 0.05f, 0.95f);
             instructions.enableAutoSizing = true;
-            instructions.fontSizeMin = 11;
-            instructions.fontSizeMax = 14;
+            instructions.fontSizeMin = 9;
+            instructions.fontSizeMax = 12;
             var statusBackground = UIFactory.Image("Command feedback panel", root,
                 new Color(0.1f, 0.16f, 0.22f), true);
             var statusRect = (RectTransform)statusBackground.transform;
-            SetAnchors(statusRect, 0.265f, 0.295f, 0.1f, 0.9f);
+            SetAnchors(statusRect, 0.185f, 0.21f, 0.1f, 0.9f);
             this.statusBackground = statusBackground.gameObject;
             status = UIFactory.Text("Command feedback", root, font, "", 13, UIFactory.Muted,
                 TextAlignmentOptions.Center, false);
-            SetAnchors(status.rectTransform, 0.265f, 0.295f, 0.1f, 0.9f);
+            SetAnchors(status.rectTransform, 0.185f, 0.21f, 0.1f, 0.9f);
         }
 
         public void Refresh(LevelCatalogEntry entry, LevelDefinition level, SimulationState state,
@@ -117,8 +117,8 @@ namespace PulseFactory.Presentation
 
         private static void SetMetric(TMP_Text label, float left, float right, TextAlignmentOptions alignment)
         {
-            label.rectTransform.anchorMin = new Vector2(left, 0.795f);
-            label.rectTransform.anchorMax = new Vector2(right, 0.845f);
+            label.rectTransform.anchorMin = new Vector2(left, 0.86f);
+            label.rectTransform.anchorMax = new Vector2(right, 0.905f);
             label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
             label.alignment = alignment;
         }

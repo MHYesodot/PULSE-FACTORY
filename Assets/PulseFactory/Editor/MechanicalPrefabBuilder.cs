@@ -42,7 +42,7 @@ namespace PulseFactory.Editor
             Material steel = CreateMaterial("FactorySteel", new Color(0.38f, 0.49f, 0.53f), 0.58f);
             Material active = CreateMaterial("RouteActive", new Color(0.24f, 0.88f, 0.64f), 0.08f);
             Material inactive = CreateMaterial("RouteInactive", new Color(0.11f, 0.16f, 0.18f), 0.04f);
-            Material board = CreateMaterial("BoardDeck", new Color(0.06f, 0.09f, 0.1f), 0.3f);
+            Material board = CreateMaterial("BoardDeck", new Color(0.12f, 0.16f, 0.17f), 0.24f);
 
             AddCargoSymbols(redCrate, red, blueCrate, blue);
             var source = CreateStationPrefab("PF_SourceStation", steel, neutral, null);

@@ -103,6 +103,7 @@ namespace PulseFactory.Tests
             var previousActive = RenderTexture.active;
             var cameraObject = new GameObject("Review screenshot camera");
             var camera = cameraObject.AddComponent<Camera>();
+            camera.cullingMask &= ~(1 << Controller().UI.MechanicalBoard.BoardRenderingLayer);
             var target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
             Texture2D image = null;
             try
@@ -111,7 +112,7 @@ namespace PulseFactory.Tests
                 camera.orthographicSize = height / (2f * canvas.scaleFactor);
                 camera.aspect = (float)width / height;
                 camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.backgroundColor = new Color(0.055f, 0.075f, 0.085f);
+                camera.backgroundColor = new Color(0.09f, 0.12f, 0.14f);
                 camera.nearClipPlane = 0.01f;
                 camera.farClipPlane = 200;
                 camera.targetTexture = target;
@@ -270,13 +271,46 @@ namespace PulseFactory.Tests
             yield return new WaitForSecondsRealtime(0.25f);
             yield return SceneManager.LoadSceneAsync("Tutorial", LoadSceneMode.Single);
             var controller = Controller();
+            var sceneCamera = Camera.main;
+            Assert.That(sceneCamera, Is.Not.Null);
+            int sceneCameraBoardLayerBefore = sceneCamera.cullingMask
+                & (1 << controller.UI.MechanicalBoard.BoardRenderingLayer);
             Assert.That(controller.SelectLevel(2), Is.True);
+            yield return null;
+            Canvas.ForceUpdateCanvases();
             var view = controller.UI.MechanicalBoard;
+            view.RenderImmediately();
             Assert.That(controller.UI.IsMechanicalBoardActive, Is.True);
             Assert.That(view.IsConfigured, Is.True);
             Assert.That(view.IsVisible, Is.True);
             Assert.That(view.RenderTarget, Is.Not.Null);
             Assert.That(view.RenderTarget.IsCreated(), Is.True);
+            Assert.That(view.IsRenderRigDetached, Is.True,
+                "The world-space board, camera, and light must not inherit Canvas scaling.");
+            Assert.That(sceneCamera.cullingMask & (1 << view.BoardRenderingLayer), Is.Zero,
+                "The gameplay camera must not render the mechanical board behind its RenderTexture.");
+            AssertMechanicalBoardFraming(view);
+            Bounds initialBoardBounds = view.BoardBounds;
+            Vector3 initialCameraPosition = view.CameraPosition;
+            Quaternion initialCameraRotation = view.CameraRotation;
+            float initialCameraSize = view.CameraOrthographicSize;
+            float initialCameraAspect = view.CameraAspect;
+
+            foreach (var resolution in new[]
+            {
+                new Vector2(360, 640), new Vector2(390, 844),
+                new Vector2(1080, 1920), new Vector2(1170, 2532)
+            })
+            {
+                float aspect = resolution.x / resolution.y * 0.95f / 0.555f;
+                float size = MechanicalBoardView.RequiredOrthographicSize(
+                    view.BoardBounds, view.CameraTarget, Quaternion.Euler(88, 0, 0),
+                    aspect, view.FramingMargin);
+                Assert.That(size, Is.GreaterThan(0));
+                AssertProjectedBoundsFit(view.BoardBounds, view.CameraTarget, aspect, size,
+                    Quaternion.Euler(88, 0, 0), view.FramingMargin, resolution.ToString());
+            }
+
             const int renderSamples = 8;
             var renderTimer = System.Diagnostics.Stopwatch.StartNew();
             for (int i = 0; i < renderSamples; i++)
@@ -300,18 +334,36 @@ namespace PulseFactory.Tests
             Assert.That(view.PackageIds, Is.Empty);
 
             Assert.That(controller.Execute(SimulationCommand.PulseA), Is.True);
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+            Assert.That(Quaternion.Angle(view.CameraRotation, initialCameraRotation), Is.LessThan(0.01f));
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
+            AssertMechanicalBoardFraming(view);
             LogAssert.Expect(LogType.Warning, "Ignored unavailable simulation command: Move");
             Assert.That(controller.Execute(SimulationCommand.Move), Is.False);
             Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1R", "J2B" }));
             yield return new WaitForSecondsRealtime(0.4f);
             Assert.That(controller.IsAnimating, Is.False);
+            AssertMechanicalBoardFraming(view);
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
 
             controller.Undo();
             Assert.That(controller.Session.State.Switches.A, Is.False);
             Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1B", "J2R" }));
+            AssertMechanicalBoardFraming(view);
             controller.Restart();
             Assert.That(controller.Session.State.Beat, Is.Zero);
             Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1B", "J2R" }));
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+            Assert.That(Vector3.Distance(view.BoardBounds.center, initialBoardBounds.center), Is.LessThan(0.001f));
+            Assert.That(Vector3.Distance(view.BoardBounds.size, initialBoardBounds.size), Is.LessThan(0.001f));
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
+
+            controller.ToggleLocale();
+            Assert.That(controller.Locale, Is.EqualTo("he"));
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
+            controller.ToggleLocale();
+            Assert.That(controller.Locale, Is.EqualTo("en"));
 
             yield return Command(controller, SimulationCommand.PulseA);
             Assert.That(controller.Execute(SimulationCommand.Move), Is.True);
@@ -319,17 +371,86 @@ namespace PulseFactory.Tests
             yield return null;
             Assert.That(view.PackageIds, Is.EquivalentTo(new[] { "red-1", "blue-1" }));
             Assert.That(float.IsNaN(view.PackagePosition("red-1").y), Is.False);
+            AssertMechanicalBoardFraming(view);
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
             yield return new WaitForSecondsRealtime(0.4f);
             Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
             Assert.That(view.PackageIds, Is.Empty);
+            AssertMechanicalBoardFraming(view);
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
             Assert.That(controller.UI.Board.GetComponentsInChildren<DiverterView>(true)
                 .All(diverter => diverter.SwitchIsOn), Is.True,
                 "The hidden UI fallback must remain synchronized with mechanical presentation.");
 
+            var resizedViewport = view.BoardViewportTransform;
+            var originalOffsetMin = resizedViewport.offsetMin;
+            var originalOffsetMax = resizedViewport.offsetMax;
+            var oldTexture = view.RenderTarget;
+            resizedViewport.offsetMin = originalOffsetMin - new Vector2(30, 0);
+            resizedViewport.offsetMax = originalOffsetMax + new Vector2(30, 0);
+            Canvas.ForceUpdateCanvases();
+            view.RenderImmediately();
+            Assert.That(view.RenderTarget, Is.Not.SameAs(oldTexture));
+            Assert.That(oldTexture.IsCreated(), Is.False);
+            Assert.That(view.CameraAspect,
+                Is.EqualTo(view.RenderTarget.width / (float)view.RenderTarget.height).Within(0.001f));
+            AssertMechanicalBoardFraming(view);
+            AssertCameraPositionUnchanged(view, initialCameraPosition);
+
+            resizedViewport.offsetMin = originalOffsetMin;
+            resizedViewport.offsetMax = originalOffsetMax;
+            Canvas.ForceUpdateCanvases();
+            view.RenderImmediately();
+            Assert.That(view.CameraAspect, Is.EqualTo(initialCameraAspect).Within(0.001f));
+            Assert.That(view.CameraOrthographicSize, Is.EqualTo(initialCameraSize).Within(0.001f));
+
             controller.ReturnToLevelSelect();
+            Assert.That(sceneCamera.cullingMask & (1 << view.BoardRenderingLayer),
+                Is.EqualTo(sceneCameraBoardLayerBefore),
+                "Hiding the mechanical board must restore the gameplay camera's original layer visibility.");
             Assert.That(controller.SelectLevel(1), Is.True);
             Assert.That(controller.UI.IsMechanicalBoardActive, Is.False);
             LogAssert.NoUnexpectedReceived();
+        }
+
+        private static void AssertMechanicalBoardFraming(MechanicalBoardView view)
+        {
+            Assert.That(view.IsBoardWithinSafeViewport, Is.True,
+                string.Format("The full static board bounds must remain inside the camera safe area: projected {0}, aspect {1:F3}, size {2:F3}, bounds {3}.",
+                    view.ProjectedBoardBounds, view.CameraAspect, view.CameraOrthographicSize, view.BoardBounds));
+            Assert.That(view.AreVisibleObjectsWithinSafeViewport, Is.True,
+                "Moving package bounds must remain inside the camera safe area.");
+            Assert.That(view.ProjectedBoardBounds.xMin, Is.GreaterThanOrEqualTo(view.FramingMargin - 0.002f));
+            Assert.That(view.ProjectedBoardBounds.xMax, Is.LessThanOrEqualTo(1f - view.FramingMargin + 0.002f));
+            Assert.That(view.ProjectedBoardBounds.yMin, Is.GreaterThanOrEqualTo(view.FramingMargin - 0.002f));
+            Assert.That(view.ProjectedBoardBounds.yMax, Is.LessThanOrEqualTo(1f - view.FramingMargin + 0.002f));
+            Assert.That(view.CameraAspect,
+                Is.EqualTo(view.RenderTarget.width / (float)view.RenderTarget.height).Within(0.001f));
+        }
+
+        private static void AssertCameraPositionUnchanged(MechanicalBoardView view, Vector3 position)
+        {
+            Assert.That(Vector3.Distance(view.CameraPosition, position), Is.LessThan(0.001f));
+        }
+
+        private static void AssertProjectedBoundsFit(Bounds bounds, Vector3 target, float aspect, float orthographicSize,
+            Quaternion rotation, float margin, string resolution)
+        {
+            float usableFraction = 1f - 2f * margin;
+            Vector3 right = rotation * Vector3.right;
+            Vector3 up = rotation * Vector3.up;
+            foreach (var corner in MechanicalBoardView.BoundsCorners(bounds))
+            {
+                Vector3 offset = corner - target;
+                float horizontal = Vector3.Dot(offset, right);
+                float vertical = Vector3.Dot(offset, up);
+                Assert.That(Mathf.Abs(horizontal),
+                    Is.LessThanOrEqualTo(orthographicSize * aspect * usableFraction + 0.001f), resolution);
+                Assert.That(Mathf.Abs(vertical),
+                    Is.LessThanOrEqualTo(orthographicSize * usableFraction + 0.001f), resolution);
+            }
         }
 
         [UnityTest]
@@ -451,12 +572,13 @@ namespace PulseFactory.Tests
             AssertLanguageLabels(controller, "עברית", true);
             yield return CaptureReviewScreen("05-gameplay-level-two.png");
             Assert.That(controller.Execute(SimulationCommand.PulseA), Is.True);
-            yield return new WaitForSecondsRealtime(0.06f);
+            yield return null;
             Assert.That(sharedSwitches.All(diverter => diverter.SwitchIsOn), Is.True,
                 "Both Level 2 diverters must reflect the same Pulse A beat.");
             yield return CaptureReviewScreen("07-level-two-after-pulse.png");
             yield return new WaitForSecondsRealtime(0.35f);
             Assert.That(controller.IsAnimating, Is.False);
+            yield return CaptureReviewScreen("10-pulse-settled.png");
             Assert.That(controller.Execute(SimulationCommand.Move), Is.True);
             yield return new WaitForSecondsRealtime(0.15f);
             yield return CaptureReviewScreen("08-package-moving.png");
@@ -465,6 +587,16 @@ namespace PulseFactory.Tests
             Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
             Assert.That(controller.Session.State.Deliveries.Select(item => item.DestinationId),
                 Is.EquivalentTo(new[] { "R", "B" }));
+            yield return CaptureReviewScreen("11-level-two-victory.png");
+
+            controller.Undo();
+            Assert.That(controller.Session.State.Switches.A, Is.True);
+            Assert.That(controller.Session.State.Deliveries, Is.Empty);
+            yield return CaptureReviewScreen("12-level-two-after-undo.png");
+            controller.Restart();
+            Assert.That(controller.Session.State.Beat, Is.Zero);
+            Assert.That(controller.Session.State.Switches.A, Is.False);
+            yield return CaptureReviewScreen("13-level-two-after-restart.png");
         }
 
         [TestCase("English", false)]

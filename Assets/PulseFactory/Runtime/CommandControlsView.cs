@@ -49,8 +49,8 @@ namespace PulseFactory.Presentation
                 var rect = (RectTransform)button.transform;
                 int visualIndex = rtl ? commandValues.Length - 1 - i : i;
                 float left = 0.035f + visualIndex * 0.315f;
-                rect.anchorMin = new Vector2(left, 0.145f);
-                rect.anchorMax = new Vector2(left + 0.29f, 0.255f);
+                rect.anchorMin = new Vector2(left, 0.095f);
+                rect.anchorMax = new Vector2(left + 0.29f, 0.18f);
                 rect.offsetMin = rect.offsetMax = Vector2.zero;
                 var commandAccent = i == 0 ? UIFactory.Mint : i == 1 ? UIFactory.Purple : UIFactory.Blue;
                 var collar = UIFactory.Circle("Command key collar", button.transform,
@@ -117,8 +117,8 @@ namespace PulseFactory.Presentation
             var rect = (RectTransform)button.transform;
             int visualOrder = rtl ? 3 - order : order;
             float left = 0.025f + visualOrder * 0.2425f;
-            rect.anchorMin = new Vector2(left, 0.025f);
-            rect.anchorMax = new Vector2(left + 0.2225f, 0.12f);
+            rect.anchorMin = new Vector2(left, 0.012f);
+            rect.anchorMax = new Vector2(left + 0.2225f, 0.085f);
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             return button;
         }
