@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PulseFactory.Core;
 using PulseFactory.Localization;
@@ -22,6 +23,8 @@ namespace PulseFactory.Presentation
         private GameplayHudView hud;
         private CommandControlsView controls;
         private BoardView board;
+        private MechanicalBoardView mechanicalBoard;
+        private bool useMechanicalBoard;
         private OutcomeView outcome;
         private Button menuLanguage;
         private Button gameLanguage;
@@ -32,6 +35,8 @@ namespace PulseFactory.Presentation
 
         public Canvas Canvas => canvas;
         public BoardView Board => board;
+        public MechanicalBoardView MechanicalBoard => mechanicalBoard;
+        public bool IsMechanicalBoardActive => useMechanicalBoard;
         public CommandControlsView Controls => controls;
         public LevelSelectionView LevelSelection => levelSelection;
         public OutcomeView Outcome => outcome;
@@ -88,7 +93,30 @@ namespace PulseFactory.Presentation
         public void SetLevel(SimulationEngine engine, SimulationState state)
         {
             board.SetLevel(engine, state);
+            if (useMechanicalBoard)
+                mechanicalBoard.SetLevel(engine, state);
             outcome.Hide();
+        }
+
+        public void SetBoardPresentationMode(bool mechanical)
+        {
+            useMechanicalBoard = mechanical && mechanicalBoard != null && mechanicalBoard.IsConfigured;
+            board.SetVisible(!useMechanicalBoard);
+            mechanicalBoard?.SetVisible(useMechanicalBoard);
+        }
+
+        public IEnumerator Present(SimulationResult result, float duration)
+        {
+            if (!useMechanicalBoard)
+            {
+                yield return board.Present(result, duration);
+                yield break;
+            }
+
+            var fallbackAnimation = StartCoroutine(board.Present(result, duration));
+            yield return mechanicalBoard.Present(result, duration);
+            if (fallbackAnimation != null)
+                yield return fallbackAnimation;
         }
 
         public void UpdateMenu(SaveData save, bool reducedMotion, string exportResultKey)
@@ -102,11 +130,12 @@ namespace PulseFactory.Presentation
 
         public void UpdateGameplay(LevelCatalogEntry entry, LevelDefinition level, SimulationEngine engine,
             SimulationState state, int bestStars, bool canUndo, bool animating, bool reducedMotion,
-            string feedbackKey, object[] feedbackArgs)
+            string feedbackKey, object[] feedbackArgs, int? displayedDeliveries = null)
         {
             gameplayReducedMotion = reducedMotion;
             board.SetReducedMotion(reducedMotion);
-            hud.Refresh(entry, level, state, text, feedbackKey, feedbackArgs, animating);
+            mechanicalBoard?.SetReducedMotion(reducedMotion);
+            hud.Refresh(entry, level, state, text, feedbackKey, feedbackArgs, animating, displayedDeliveries);
             controls.Refresh(text, engine, state, canUndo, animating, reducedMotion);
             gameLanguage.GetComponent<ButtonPressFeedback>().SetMotionEnabled(!reducedMotion);
             outcome.SetReducedMotion(reducedMotion);
@@ -153,6 +182,9 @@ namespace PulseFactory.Presentation
             boardViewport.offsetMax = new Vector2(-10, -10);
             board = boardFrame.gameObject.AddComponent<BoardView>();
             board.Build(boardViewport, font, text);
+            mechanicalBoard = boardFrame.gameObject.AddComponent<MechanicalBoardView>();
+            mechanicalBoard.Build(boardViewport);
+            mechanicalBoard.SetVisible(false);
 
             var hudHolder = new GameObject("Gameplay HUD view", typeof(RectTransform));
             hudHolder.transform.SetParent(parent, false);

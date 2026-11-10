@@ -1,0 +1,42 @@
+{
+  "unityVersion": "6000.0.62f1",
+  "source": "Phase 4C.1 Unity FBX exports",
+  "models": [
+    {
+      "path": "Assets/PulseFactory/Mechanical/Models/conveyor_module.fbx",
+      "sha256": "a4c153f552390dffbd009dd7a59210d496ff217e4d7790c46c924480e2abf538",
+      "unityRendererCount": 19,
+      "unityBoundsMeters": [0.75, 0.424, 0.725]
+    },
+    {
+      "path": "Assets/PulseFactory/Mechanical/Models/diverter_module.fbx",
+      "sha256": "29c5c67d6c62d27e35c8053d62f0540ca25c36c1289ea1b62ef00070e34828a1",
+      "unityRendererCount": 13,
+      "unityBoundsMeters": [1.08, 0.51, 1.4387],
+      "armPivot": "PF_DiverterAssembly/diverter_module/ASSET_DIVERTER_ArmPivot",
+      "routingArm": "PF_DiverterAssembly/diverter_module/ASSET_DIVERTER_ArmPivot/ASSET_DIVERTER_RoutingArm"
+    },
+    {
+      "path": "Assets/PulseFactory/Mechanical/Models/cargo_red.fbx",
+      "sha256": "337ebd2d8bf7c868dea6f10ce61e8a175b8ceb8f4f901984d951b972c4d01eb2",
+      "unityRendererCount": 7,
+      "unityBoundsMeters": [0.492, 0.4375, 0.432]
+    },
+    {
+      "path": "Assets/PulseFactory/Mechanical/Models/cargo_blue.fbx",
+      "sha256": "9dde058addaca7cfc1bba7f9f8dc80c2cc656abd3f91305c7fb5182ac7d39540",
+      "unityRendererCount": 7,
+      "unityBoundsMeters": [0.492, 0.4375, 0.432]
+    }
+  ],
+  "generatedPrefabs": [
+    "PF_ConveyorModule",
+    "PF_DiverterAssembly",
+    "PF_CargoRed",
+    "PF_CargoBlue",
+    "PF_SourceStation",
+    "PF_DestinationRed",
+    "PF_DestinationBlue"
+  ],
+  "manifestReport": "./unity-import-report.json"
+}

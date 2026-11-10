@@ -66,7 +66,8 @@ namespace PulseFactory.Presentation
         }
 
         public void Refresh(LevelCatalogEntry entry, LevelDefinition level, SimulationState state,
-            LocalizationCatalog text, string feedbackKey, object[] feedbackArgs, bool animating)
+            LocalizationCatalog text, string feedbackKey, object[] feedbackArgs, bool animating,
+            int? displayedDeliveries = null)
         {
             title.text = text.Text(entry.TitleKey);
             UIFactory.SetTextDirection(title, text.RightToLeft);
@@ -76,7 +77,7 @@ namespace PulseFactory.Presentation
             beatValue.text = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", state.Beat, level.MaxBeats);
             progressLabel.text = text.Text("progressLabel");
             progressValue.text = string.Format(CultureInfo.InvariantCulture, "{0} / {1}",
-                state.Deliveries.Count, level.Spawns.Count);
+                displayedDeliveries ?? state.Deliveries.Count, level.Spawns.Count);
             switches.text = text.Text("switches", state.Switches.A ? text.Text("switchOn") : text.Text("switchOff"),
                 state.Switches.B ? text.Text("switchOn") : text.Text("switchOff"));
             instructions.text = text.Text(entry.InstructionKey);

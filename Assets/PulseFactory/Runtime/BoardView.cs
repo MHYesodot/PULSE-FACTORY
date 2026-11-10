@@ -146,6 +146,11 @@ namespace PulseFactory.Presentation
 
         public void SetReducedMotion(bool value) => reducedMotion = value;
 
+        public void SetVisible(bool value)
+        {
+            if (boardRect != null) boardRect.gameObject.SetActive(value);
+        }
+
         public IEnumerator Present(SimulationResult result, float duration)
         {
             if (result == null) throw new ArgumentNullException(nameof(result));

@@ -92,17 +92,70 @@ namespace PulseFactory.Tests
         private IEnumerator CaptureReviewScreen(string fileName)
         {
             if (string.IsNullOrWhiteSpace(screenshotDirectory)) yield break;
-            yield return new WaitForEndOfFrame();
+            int width = int.TryParse(Environment.GetEnvironmentVariable("PULSE_FACTORY_SCREEN_WIDTH"), out var configuredWidth)
+                ? configuredWidth : Screen.width;
+            int height = int.TryParse(Environment.GetEnvironmentVariable("PULSE_FACTORY_SCREEN_HEIGHT"), out var configuredHeight)
+                ? configuredHeight : Screen.height;
+            var canvas = Controller().UI.Canvas;
+            var previousMode = canvas.renderMode;
+            var previousCamera = canvas.worldCamera;
+            float previousPlaneDistance = canvas.planeDistance;
+            var previousActive = RenderTexture.active;
+            var cameraObject = new GameObject("Review screenshot camera");
+            var camera = cameraObject.AddComponent<Camera>();
+            var target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+            Texture2D image = null;
+            try
+            {
+                camera.orthographic = true;
+                camera.orthographicSize = height / (2f * canvas.scaleFactor);
+                camera.aspect = (float)width / height;
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = new Color(0.055f, 0.075f, 0.085f);
+                camera.nearClipPlane = 0.01f;
+                camera.farClipPlane = 200;
+                camera.targetTexture = target;
+                camera.transform.position = new Vector3(0, 0, -10);
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = camera;
+                canvas.planeDistance = 10;
+                yield return null;
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                Controller().UI.MechanicalBoard.RenderImmediately();
+                camera.Render();
+                RenderTexture.active = target;
+                image = new Texture2D(width, height, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                image.Apply();
+                File.WriteAllBytes(Path.Combine(screenshotDirectory, fileName), EncodePng(image));
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                canvas.renderMode = previousMode;
+                canvas.worldCamera = previousCamera;
+                canvas.planeDistance = previousPlaneDistance;
+                camera.targetTexture = null;
+                target.Release();
+                UnityEngine.Object.Destroy(target);
+                UnityEngine.Object.Destroy(cameraObject);
+                if (image != null) UnityEngine.Object.Destroy(image);
+            }
             var path = Path.Combine(screenshotDirectory, fileName);
-            var screenCapture = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType("UnityEngine.ScreenCapture"))
-                .FirstOrDefault(type => type != null);
-            Assert.That(screenCapture, Is.Not.Null, "Unity's screen-capture module is unavailable.");
-            var capture = screenCapture.GetMethod("CaptureScreenshot", new[] { typeof(string), typeof(int) });
-            Assert.That(capture, Is.Not.Null, "Unity screenshot capture API is unavailable.");
-            capture.Invoke(null, new object[] { path, 1 });
-            yield return new WaitForSecondsRealtime(0.25f);
             Assert.That(File.Exists(path), Is.True, "Unity did not create screenshot: " + path);
+            Assert.That(new FileInfo(path).Length, Is.GreaterThan(1024), "Unity screenshot is unexpectedly empty.");
+        }
+
+        private static byte[] EncodePng(Texture2D texture)
+        {
+            var imageConversion = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(assembly => assembly.GetType("UnityEngine.ImageConversion"))
+                .FirstOrDefault(type => type != null);
+            var encode = imageConversion?.GetMethod("EncodeToPNG", new[] { typeof(Texture2D) });
+            if (encode == null)
+                throw new InvalidOperationException("Unity's PNG encoding API is unavailable.");
+            return (byte[])encode.Invoke(null, new object[] { texture });
         }
 
         [UnityTest]
@@ -207,6 +260,79 @@ namespace PulseFactory.Tests
         }
 
         [UnityTest]
+        public IEnumerator LevelTwoMechanicalBoardFollowsGraphPulseUndoRestartAndPackageDelivery()
+        {
+            var seedStore = new SaveStore(savePath, message => Assert.Fail(message));
+            var seededProgress = new SaveData();
+            seededProgress.RecordVictory("tutorial", 1, 3);
+            Assert.That(seedStore.Save(seededProgress), Is.True);
+            Screen.SetResolution(1080, 1920, FullScreenMode.Windowed);
+            yield return new WaitForSecondsRealtime(0.25f);
+            yield return SceneManager.LoadSceneAsync("Tutorial", LoadSceneMode.Single);
+            var controller = Controller();
+            Assert.That(controller.SelectLevel(2), Is.True);
+            var view = controller.UI.MechanicalBoard;
+            Assert.That(controller.UI.IsMechanicalBoardActive, Is.True);
+            Assert.That(view.IsConfigured, Is.True);
+            Assert.That(view.IsVisible, Is.True);
+            Assert.That(view.RenderTarget, Is.Not.Null);
+            Assert.That(view.RenderTarget.IsCreated(), Is.True);
+            const int renderSamples = 8;
+            var renderTimer = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < renderSamples; i++)
+                view.RenderImmediately();
+            renderTimer.Stop();
+            LogAssert.Expect(LogType.Log, new Regex("^Phase 4D measurement: .*"));
+            Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "Phase 4D measurement: {0} Unity renderers, {1}x{2} RenderTexture, viewport {3:F0}x{4:F0}, canvas scale {5:F2}, screen {6}x{7}, {8:F2} ms CPU per Camera.Render.",
+                view.RendererCount, view.RenderTarget.width, view.RenderTarget.height,
+                view.ViewportSize.x, view.ViewportSize.y, controller.UI.Canvas.scaleFactor,
+                Screen.width, Screen.height,
+                renderTimer.Elapsed.TotalMilliseconds / renderSamples));
+            Assert.That(view.RouteEdgeIds, Is.EquivalentTo(new[]
+            {
+                "S1J1", "S2J2", "J1R", "J1B", "J2R", "J2B"
+            }));
+            Assert.That(view.DiverterIds, Is.EquivalentTo(new[] { "J1", "J2" }));
+            Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1B", "J2R" }));
+            Assert.That(MechanicalBoardView.BridgeLiftAt(0.5f), Is.EqualTo(0.58f).Within(0.001f));
+            Assert.That(MechanicalBoardView.RouteHeight("J2R", 0.5f), Is.EqualTo(0.34f).Within(0.001f));
+            Assert.That(view.PackageIds, Is.Empty);
+
+            Assert.That(controller.Execute(SimulationCommand.PulseA), Is.True);
+            LogAssert.Expect(LogType.Warning, "Ignored unavailable simulation command: Move");
+            Assert.That(controller.Execute(SimulationCommand.Move), Is.False);
+            Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1R", "J2B" }));
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.That(controller.IsAnimating, Is.False);
+
+            controller.Undo();
+            Assert.That(controller.Session.State.Switches.A, Is.False);
+            Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1B", "J2R" }));
+            controller.Restart();
+            Assert.That(controller.Session.State.Beat, Is.Zero);
+            Assert.That(view.ActiveRouteIds, Is.EquivalentTo(new[] { "S1J1", "S2J2", "J1B", "J2R" }));
+
+            yield return Command(controller, SimulationCommand.PulseA);
+            Assert.That(controller.Execute(SimulationCommand.Move), Is.True);
+            Assert.That(view.IsPresenting, Is.True);
+            yield return null;
+            Assert.That(view.PackageIds, Is.EquivalentTo(new[] { "red-1", "blue-1" }));
+            Assert.That(float.IsNaN(view.PackagePosition("red-1").y), Is.False);
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.That(controller.Session.State.Result.Status, Is.EqualTo(LevelStatus.Victory));
+            Assert.That(view.PackageIds, Is.Empty);
+            Assert.That(controller.UI.Board.GetComponentsInChildren<DiverterView>(true)
+                .All(diverter => diverter.SwitchIsOn), Is.True,
+                "The hidden UI fallback must remain synchronized with mechanical presentation.");
+
+            controller.ReturnToLevelSelect();
+            Assert.That(controller.SelectLevel(1), Is.True);
+            Assert.That(controller.UI.IsMechanicalBoardActive, Is.False);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator WrongRouteFailsAndUndoAllowsCorrection()
         {
             yield return SceneManager.LoadSceneAsync("Tutorial", LoadSceneMode.Single);
@@ -268,7 +394,11 @@ namespace PulseFactory.Tests
         {
             if (!string.IsNullOrWhiteSpace(screenshotDirectory))
             {
-                Screen.SetResolution(540, 960, FullScreenMode.Windowed);
+                int width = int.TryParse(Environment.GetEnvironmentVariable("PULSE_FACTORY_SCREEN_WIDTH"), out var configuredWidth)
+                    ? configuredWidth : 1080;
+                int height = int.TryParse(Environment.GetEnvironmentVariable("PULSE_FACTORY_SCREEN_HEIGHT"), out var configuredHeight)
+                    ? configuredHeight : 1920;
+                Screen.SetResolution(width, height, FullScreenMode.Windowed);
                 yield return new WaitForSecondsRealtime(0.5f);
             }
             yield return SceneManager.LoadSceneAsync("Tutorial", LoadSceneMode.Single);

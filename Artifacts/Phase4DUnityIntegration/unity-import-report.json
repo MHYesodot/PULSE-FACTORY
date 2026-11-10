@@ -1,0 +1,173 @@
+{
+    "UnityVersion": "6000.0.62f1",
+    "Models": [
+        {
+            "File": "Assets/PulseFactory/Mechanical/Models/conveyor_module.fbx",
+            "RootName": "conveyor_module",
+            "RendererCount": 19,
+            "MaterialCount": 5,
+            "BoundsMeters": [
+                0.75,
+                0.4240000247955322,
+                0.7250000238418579
+            ],
+            "MeshNames": [
+                "ASSET_CONVEYOR_Axle_-1_-1",
+                "ASSET_CONVEYOR_Axle_-1_1",
+                "ASSET_CONVEYOR_Axle_1_-1",
+                "ASSET_CONVEYOR_Axle_1_1",
+                "ASSET_CONVEYOR_Belt",
+                "ASSET_CONVEYOR_Bolt_-0.23_-1",
+                "ASSET_CONVEYOR_Bolt_-0.23_1",
+                "ASSET_CONVEYOR_Bolt_0.23_-1",
+                "ASSET_CONVEYOR_Bolt_0.23_1",
+                "ASSET_CONVEYOR_Deck",
+                "ASSET_CONVEYOR_Rail_-1",
+                "ASSET_CONVEYOR_Rail_1",
+                "ASSET_CONVEYOR_RailCap_-1",
+                "ASSET_CONVEYOR_RailCap_1",
+                "ASSET_CONVEYOR_Roller_-1",
+                "ASSET_CONVEYOR_Roller_1",
+                "ASSET_CONVEYOR_Tread_-0.23",
+                "ASSET_CONVEYOR_Tread_0.0",
+                "ASSET_CONVEYOR_Tread_0.23"
+            ],
+            "Hierarchy": [
+                "conveyor_module",
+                "  ASSET_CONVEYOR_Axle_-1_-1",
+                "  ASSET_CONVEYOR_Axle_-1_1",
+                "  ASSET_CONVEYOR_Axle_1_-1",
+                "  ASSET_CONVEYOR_Axle_1_1",
+                "  ASSET_CONVEYOR_Belt",
+                "  ASSET_CONVEYOR_Bolt_-0.23_-1",
+                "  ASSET_CONVEYOR_Bolt_-0.23_1",
+                "  ASSET_CONVEYOR_Bolt_0.23_-1",
+                "  ASSET_CONVEYOR_Bolt_0.23_1",
+                "  ASSET_CONVEYOR_Deck",
+                "  ASSET_CONVEYOR_Rail_-1",
+                "  ASSET_CONVEYOR_Rail_1",
+                "  ASSET_CONVEYOR_RailCap_-1",
+                "  ASSET_CONVEYOR_RailCap_1",
+                "  ASSET_CONVEYOR_Roller_-1",
+                "  ASSET_CONVEYOR_Roller_1",
+                "  ASSET_CONVEYOR_Tread_-0.23",
+                "  ASSET_CONVEYOR_Tread_0.0",
+                "  ASSET_CONVEYOR_Tread_0.23"
+            ]
+        },
+        {
+            "File": "Assets/PulseFactory/Mechanical/Models/diverter_module.fbx",
+            "RootName": "diverter_module",
+            "RendererCount": 13,
+            "MaterialCount": 5,
+            "BoundsMeters": [
+                1.0800000429153443,
+                0.5099999904632568,
+                1.4386951923370362
+            ],
+            "MeshNames": [
+                "ASSET_DIVERTER_RoutingArm",
+                "ASSET_DIVERTER_BaseFoot",
+                "ASSET_DIVERTER_BasePaint",
+                "ASSET_DIVERTER_Fastener_0",
+                "ASSET_DIVERTER_Fastener_90",
+                "ASSET_DIVERTER_Fastener_180",
+                "ASSET_DIVERTER_Fastener_270",
+                "ASSET_DIVERTER_GroupA",
+                "ASSET_DIVERTER_GroupBadge",
+                "ASSET_DIVERTER_OuterRing",
+                "ASSET_DIVERTER_PivotPin",
+                "ASSET_DIVERTER_PivotRing",
+                "ASSET_DIVERTER_RotatingPlate"
+            ],
+            "Hierarchy": [
+                "diverter_module",
+                "  ASSET_DIVERTER_ArmPivot",
+                "    ASSET_DIVERTER_RoutingArm",
+                "  ASSET_DIVERTER_BaseFoot",
+                "  ASSET_DIVERTER_BasePaint",
+                "  ASSET_DIVERTER_Fastener_0",
+                "  ASSET_DIVERTER_Fastener_90",
+                "  ASSET_DIVERTER_Fastener_180",
+                "  ASSET_DIVERTER_Fastener_270",
+                "  ASSET_DIVERTER_GroupA",
+                "  ASSET_DIVERTER_GroupBadge",
+                "  ASSET_DIVERTER_OuterRing",
+                "  ASSET_DIVERTER_PivotPin",
+                "  ASSET_DIVERTER_PivotRing",
+                "  ASSET_DIVERTER_RotatingPlate"
+            ]
+        },
+        {
+            "File": "Assets/PulseFactory/Mechanical/Models/cargo_red.fbx",
+            "RootName": "cargo_red",
+            "RendererCount": 7,
+            "MaterialCount": 4,
+            "BoundsMeters": [
+                0.492000013589859,
+                0.4375000298023224,
+                0.43199995160102847
+            ],
+            "MeshNames": [
+                "ASSET_CARGO_RED_Corner_-1_-1",
+                "ASSET_CARGO_RED_Corner_-1_1",
+                "ASSET_CARGO_RED_Corner_1_-1",
+                "ASSET_CARGO_RED_Corner_1_1",
+                "ASSET_CARGO_RED_CrateBody",
+                "ASSET_CARGO_RED_LowerBand",
+                "ASSET_CARGO_RED_TopPlate"
+            ],
+            "Hierarchy": [
+                "cargo_red",
+                "  ASSET_CARGO_RED_Corner_-1_-1",
+                "  ASSET_CARGO_RED_Corner_-1_1",
+                "  ASSET_CARGO_RED_Corner_1_-1",
+                "  ASSET_CARGO_RED_Corner_1_1",
+                "  ASSET_CARGO_RED_CrateBody",
+                "  ASSET_CARGO_RED_LowerBand",
+                "  ASSET_CARGO_RED_TopPlate"
+            ]
+        },
+        {
+            "File": "Assets/PulseFactory/Mechanical/Models/cargo_blue.fbx",
+            "RootName": "cargo_blue",
+            "RendererCount": 7,
+            "MaterialCount": 4,
+            "BoundsMeters": [
+                0.492000013589859,
+                0.4375000298023224,
+                0.43199995160102847
+            ],
+            "MeshNames": [
+                "ASSET_CARGO_BLUE_Corner_-1_-1",
+                "ASSET_CARGO_BLUE_Corner_-1_1",
+                "ASSET_CARGO_BLUE_Corner_1_-1",
+                "ASSET_CARGO_BLUE_Corner_1_1",
+                "ASSET_CARGO_BLUE_CrateBody",
+                "ASSET_CARGO_BLUE_LowerBand",
+                "ASSET_CARGO_BLUE_TopPlate"
+            ],
+            "Hierarchy": [
+                "cargo_blue",
+                "  ASSET_CARGO_BLUE_Corner_-1_-1",
+                "  ASSET_CARGO_BLUE_Corner_-1_1",
+                "  ASSET_CARGO_BLUE_Corner_1_-1",
+                "  ASSET_CARGO_BLUE_Corner_1_1",
+                "  ASSET_CARGO_BLUE_CrateBody",
+                "  ASSET_CARGO_BLUE_LowerBand",
+                "  ASSET_CARGO_BLUE_TopPlate"
+            ]
+        }
+    ],
+    "Prefabs": [
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_ConveyorModule.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_DiverterAssembly.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_CargoRed.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_CargoBlue.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_SourceStation.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_DestinationRed.prefab",
+        "Assets/PulseFactory/Mechanical/Prefabs/PF_DestinationBlue.prefab"
+    ],
+    "DiverterArmPivot": "PF_DiverterAssembly/diverter_module/ASSET_DIVERTER_ArmPivot",
+    "DiverterRoutingArm": "PF_DiverterAssembly/diverter_module/ASSET_DIVERTER_ArmPivot/ASSET_DIVERTER_RoutingArm"
+}

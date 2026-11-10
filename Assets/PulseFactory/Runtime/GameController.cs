@@ -10,6 +10,7 @@ using PulseFactory.Persistence;
 using PulseFactory.Presentation;
 using TMPro;
 using UnityEngine;
+using EventType = PulseFactory.Core.EventType;
 
 namespace PulseFactory.UI
 {
@@ -25,9 +26,11 @@ namespace PulseFactory.UI
         private PlaytestStatsStore stats;
         private TMP_FontAsset font;
         private GameUI ui;
+        private MechanicalBoardSettings boardSettings;
         private LevelCatalogEntry currentEntry;
         private float levelStartedAt;
         private bool animationRunning;
+        private int pendingDeliveryCount;
         private bool loadFailed;
         private string warningKey;
         private string exportResultKey = "statsDisclaimer";
@@ -93,6 +96,8 @@ namespace PulseFactory.UI
             font = Resources.Load<TMP_FontAsset>("Fonts/NotoSansHebrew SDF");
             if (font == null)
                 throw new InvalidOperationException("Missing packaged bilingual TMP font at Resources/Fonts/NotoSansHebrew SDF.asset.");
+            boardSettings = Resources.Load<MechanicalBoardSettings>(
+                "PulseFactoryMechanical/MechanicalBoardSettings");
         }
 
         private void ConfigureLocalStores()
@@ -150,6 +155,7 @@ namespace PulseFactory.UI
             levelStartedAt = Time.realtimeSinceStartup;
             stats.RecordStart(currentEntry.LevelId);
             ui.ShowGameplay();
+            ui.SetBoardPresentationMode(UsesMechanicalBoard(Session.Engine.Level));
             ui.SetLevel(Session.Engine, Session.State);
             warningKey = saveStore.HadLoadError ? "saveWarning" : null;
             RefreshGameplay();
@@ -174,6 +180,7 @@ namespace PulseFactory.UI
                 stats.RecordCompletion(currentEntry.LevelId,
                     Math.Max(0, Time.realtimeSinceStartup - levelStartedAt));
             }
+            pendingDeliveryCount = result.Events.Count(item => item.Type == EventType.Delivered);
             animationRunning = true;
             RefreshGameplay("animating");
             StartCoroutine(Animate(result));
@@ -182,8 +189,9 @@ namespace PulseFactory.UI
 
         private IEnumerator Animate(SimulationResult result)
         {
-            yield return ui.Board.Present(result, ReducedMotion ? 0 : PackageAnimationSeconds);
+            yield return ui.Present(result, ReducedMotion ? 0 : PackageAnimationSeconds);
             animationRunning = false;
+            pendingDeliveryCount = 0;
             RefreshGameplay();
             if (result.State.Result.Status == LevelStatus.Victory)
             {
@@ -204,7 +212,7 @@ namespace PulseFactory.UI
             Session.Undo();
             stats.RecordUndo(currentEntry.LevelId);
             ui.Outcome.Hide();
-            ui.Board.SetLevel(Session.Engine, Session.State);
+            ui.SetLevel(Session.Engine, Session.State);
             RefreshGameplay();
         }
 
@@ -219,7 +227,7 @@ namespace PulseFactory.UI
             levelStartedAt = Time.realtimeSinceStartup;
             stats.RecordRestart(currentEntry.LevelId);
             ui.Outcome.Hide();
-            ui.Board.SetLevel(Session.Engine, Session.State);
+            ui.SetLevel(Session.Engine, Session.State);
             RefreshGameplay();
         }
 
@@ -228,6 +236,7 @@ namespace PulseFactory.UI
             if (IsAnimating) return;
             Session = null;
             currentEntry = null;
+            ui.SetBoardPresentationMode(false);
             ui.ShowLevelSelect();
             RefreshMenu();
         }
@@ -295,8 +304,15 @@ namespace PulseFactory.UI
                 : Array.Empty<object>();
             int stars = save.BestResults.FirstOrDefault(item => item.LevelId == currentEntry.LevelId)?.Stars ?? 0;
             ui.UpdateGameplay(currentEntry, Session.Engine.Level, Session.Engine, Session.State, stars,
-                Session.CanUndo, IsAnimating, ReducedMotion, key, args);
+                Session.CanUndo, IsAnimating, ReducedMotion, key, args,
+                Math.Max(0, Session.State.Deliveries.Count - (animationRunning ? pendingDeliveryCount : 0)));
         }
+
+        private bool UsesMechanicalBoard(LevelDefinition level) =>
+            boardSettings != null
+            && boardSettings.Mode == BoardPresentationMode.Mechanical3DLevel2
+            && boardSettings.Assets != null
+            && string.Equals(level.Id, "shared-control", StringComparison.Ordinal);
 
         private string FeedbackKey()
         {
