@@ -31,6 +31,11 @@ The [generation prompt pack](generation-prompts.md) records the prompts, and
 the [provenance manifest](generation-manifest.json) now records all four PNGs
 and their metadata.
 
+The follow-up [asset-first experiment](AssetExperiment/README.md) contains
+three isolated component candidates, their evaluation, provenance, and a
+Unity assembly proposal. Those candidates are also exploratory only and were
+not integrated.
+
 ## Verified Level 2 reference
 
 The structural reference is

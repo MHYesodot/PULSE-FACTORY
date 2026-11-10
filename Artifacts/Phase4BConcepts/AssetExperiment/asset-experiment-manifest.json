@@ -1,0 +1,146 @@
+{
+  "packageId": "pulse-factory-phase4b-asset-experiment",
+  "createdAt": "2026-11-10",
+  "status": "three-local-candidates-reviewed-none-production-ready",
+  "assetLimit": {
+    "maximumCandidatesPerAsset": 2,
+    "maximumCandidateRenders": 6,
+    "savedCandidateRenders": 3,
+    "savedCandidatesPerAsset": {
+      "conveyor": 1,
+      "diverter": 1,
+      "cargo": 1
+    },
+    "secondConveyorAttempt": {
+      "attempted": true,
+      "savedOutput": false,
+      "result": "MCP request timed out; local stdio retry returned fetch failed; no output file exists"
+    }
+  },
+  "localEnvironment": {
+    "os": "macOS",
+    "hardware": "Apple M1 Pro, 16 GB unified memory",
+    "drawThingsVersion": "26.1020.0",
+    "endpoint": "http://127.0.0.1:7860",
+    "model": "sd_xl_base_1.0_q8p.ckpt",
+    "sourceCheckpoint": "Stable Diffusion XL 1.0 Base",
+    "sourceRevision": "462165984030d82259a11f4367a4eed129e94a7b",
+    "modelLicense": "CreativeML Open RAIL++-M",
+    "licenseUrl": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/462165984030d82259a11f4367a4eed129e94a7b/LICENSE.md",
+    "externalUpload": false,
+    "cloudGeneration": false,
+    "generationCharges": 0,
+    "newModelOrToolDownloaded": false
+  },
+  "sharedArtDirection": {
+    "cameraIntent": "elevated three-quarter tabletop product view",
+    "materials": "painted steel and brushed-metal details",
+    "lighting": "soft warm studio key light from upper left",
+    "background": "plain pale warm-gray",
+    "intendedUse": "isolated, reusable gameplay component concepts",
+    "actualConsistency": "camera angle and material style varied across outputs"
+  },
+  "candidates": [
+    {
+      "assetId": "asset-conveyor-a1",
+      "category": "conveyor-module",
+      "file": "../Generated/asset-conveyor-a1-2026-11-10T100709838Z-9d22fb05.png",
+      "metadataFile": "../Generated/asset-conveyor-a1-2026-11-10T100709838Z-9d22fb05.json",
+      "width": 768,
+      "height": 768,
+      "steps": 30,
+      "cfgScale": 6.5,
+      "seed": 4102101,
+      "sha256": "7ac7b098fac690b30f0a45365c5703dfda745181999e6ece9040a6efed938fb4",
+      "bytes": 545892,
+      "pngColorType": 2,
+      "hasAlphaChannel": false,
+      "review": {
+        "recognition": 3,
+        "silhouette": 3,
+        "styleConsistency": 2,
+        "cameraConsistency": 2,
+        "backgroundSeparation": 3,
+        "cropping": 5,
+        "reusability": 1,
+        "classification": "concept artwork only; not a repeatable production sprite"
+      },
+      "prompt": "Single isolated short straight industrial conveyor module, centered and fully visible, one belt only. A dark charcoal rubber belt runs lengthwise between two sturdy muted-red painted steel side rails; small brushed-metal rollers are visible at both ends; a few restrained bolts. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, object axis diagonal lower-left to upper-right. Plain matte pale warm-gray background, strong object/background separation. No scene, no floor machinery, no extra conveyor, no cargo, no text, no labels, no logos, no watermark.",
+      "negativePrompt": "photorealistic, complex factory scene, multiple conveyor sections, curved belt, branching paths, package, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+      "commercialUseReview": "Model license applies with restrictions; output-specific rights/IP review incomplete; not approved for commercial production."
+    },
+    {
+      "assetId": "asset-diverter-a1",
+      "category": "diverter-module",
+      "file": "../Generated/asset-diverter-a1-2026-11-10T100857669Z-0261fe30.png",
+      "metadataFile": "../Generated/asset-diverter-a1-2026-11-10T100857669Z-0261fe30.json",
+      "width": 768,
+      "height": 768,
+      "steps": 30,
+      "cfgScale": 6.5,
+      "seed": 4102102,
+      "sha256": "f93829fb549474ef312e954b12f79c8945d317f6e07482b08f3d18aa41de877e",
+      "bytes": 349644,
+      "pngColorType": 2,
+      "hasAlphaChannel": false,
+      "review": {
+        "recognition": 1,
+        "silhouette": 1,
+        "styleConsistency": 2,
+        "cameraConsistency": 1,
+        "backgroundSeparation": 3,
+        "cropping": 5,
+        "reusability": 1,
+        "classification": "concept artwork only; not a usable routing-switch sprite"
+      },
+      "prompt": "Single isolated compact mechanical conveyor diverter switch, centered and fully visible. A circular low-profile painted-red steel base with one short dark conveyor entry and two short outgoing channel mouths at a clear fork. A visibly movable brushed-metal routing arm pivots from the center toward one outlet; pivot pin and a few restrained bolts. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, same camera and object scale as a miniature factory component render. Plain matte pale warm-gray background, strong object/background separation. No scene, no cargo, no text, no labels, no logos, no watermark.",
+      "negativePrompt": "photorealistic, complex factory scene, multiple switches, long conveyor, extra branches, extra arms, package, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+      "commercialUseReview": "Model license applies with restrictions; output-specific rights/IP review incomplete; not approved for commercial production."
+    },
+    {
+      "assetId": "asset-cargo-a1",
+      "category": "cargo-package",
+      "file": "../Generated/asset-cargo-a1-2026-11-10T101047695Z-20f23c2f.png",
+      "metadataFile": "../Generated/asset-cargo-a1-2026-11-10T101047695Z-20f23c2f.json",
+      "width": 768,
+      "height": 768,
+      "steps": 30,
+      "cfgScale": 6.5,
+      "seed": 4102103,
+      "sha256": "920561de32bbd722c3f0795cc7e593b6e0aeb192f8cbba31719661e88b7d6eac",
+      "bytes": 610516,
+      "pngColorType": 2,
+      "hasAlphaChannel": false,
+      "review": {
+        "recognition": 3,
+        "silhouette": 3,
+        "styleConsistency": 2,
+        "cameraConsistency": 2,
+        "backgroundSeparation": 3,
+        "cropping": 4,
+        "reusability": 2,
+        "classification": "concept artwork only; redesign required before sprite use"
+      },
+      "prompt": "Single isolated compact industrial cargo crate, centered and fully visible. A small rectangular red-painted metal package with sturdy beveled corners, subtle brushed-steel edge bands, a large blank neutral ivory identification plate centered on its front face, no markings on the plate. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, same camera and object scale as a miniature factory component render. Plain matte pale warm-gray background, strong object/background separation. No scene, no conveyor, no extra objects, no symbols, no text, no labels, no logos, no watermark.",
+      "negativePrompt": "photorealistic, complex factory scene, multiple crates, blue crate, symbol, writing, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+      "commercialUseReview": "Model license applies with restrictions; output-specific rights/IP review incomplete; not approved for commercial production."
+    }
+  ],
+  "alternativeStrategy": {
+    "recommendation": "Hand-author low-poly tabletop components in Blender, render consistent orthographic/elevated sprites with transparency, and animate/assemble them in Unity.",
+    "softwareCost": 0,
+    "artworkTerms": "Blender Foundation states artwork created with Blender is the artist's property and may be used commercially.",
+    "hardwareRequirementsSource": "https://www.blender.org/download/requirements/",
+    "hardware": "Official current macOS minimum: Apple Silicon, macOS 13+, 8 GB RAM; recommended 32 GB RAM. This machine is above minimum, below recommended RAM.",
+    "artworkTermsSource": "https://www.blender.org/about/license/",
+    "productionLabor": "Not costed",
+    "installedOrStarted": false
+  },
+  "unityStatus": {
+    "integrationStarted": false,
+    "gameplayFilesChanged": false,
+    "simulationChanged": false,
+    "levelOrProgressionChanged": false,
+    "uiChanged": false
+  }
+}

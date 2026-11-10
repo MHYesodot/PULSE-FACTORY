@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-10T10:08:57.675Z",
+  "mode": "text-to-image",
+  "endpoint": "http://127.0.0.1:7860",
+  "prompt": "Single isolated compact mechanical conveyor diverter switch, centered and fully visible. A circular low-profile painted-red steel base with one short dark conveyor entry and two short outgoing channel mouths at a clear fork. A visibly movable brushed-metal routing arm pivots from the center toward one outlet; pivot pin and a few restrained bolts. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, same camera and object scale as a miniature factory component render. Plain matte pale warm-gray background, strong object/background separation. No scene, no cargo, no text, no labels, no logos, no watermark.",
+  "negativePrompt": "photorealistic, complex factory scene, multiple switches, long conveyor, extra branches, extra arms, package, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+  "parameters": {
+    "width": 768,
+    "height": 768,
+    "steps": 30,
+    "cfgScale": 6.5,
+    "seed": 4102102
+  },
+  "outputFile": "asset-diverter-a1-2026-11-10T100857669Z-0261fe30.png"
+}

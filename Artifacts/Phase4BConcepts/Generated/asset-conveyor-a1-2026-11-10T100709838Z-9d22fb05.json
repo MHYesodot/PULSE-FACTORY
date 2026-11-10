@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-10T10:07:09.854Z",
+  "mode": "text-to-image",
+  "endpoint": "http://127.0.0.1:7860",
+  "prompt": "Single isolated short straight industrial conveyor module, centered and fully visible, one belt only. A dark charcoal rubber belt runs lengthwise between two sturdy muted-red painted steel side rails; small brushed-metal rollers are visible at both ends; a few restrained bolts. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, object axis diagonal lower-left to upper-right. Plain matte pale warm-gray background, strong object/background separation. No scene, no floor machinery, no extra conveyor, no cargo, no text, no labels, no logos, no watermark.",
+  "negativePrompt": "photorealistic, complex factory scene, multiple conveyor sections, curved belt, branching paths, package, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+  "parameters": {
+    "width": 768,
+    "height": 768,
+    "steps": 30,
+    "cfgScale": 6.5,
+    "seed": 4102101
+  },
+  "outputFile": "asset-conveyor-a1-2026-11-10T100709838Z-9d22fb05.png"
+}

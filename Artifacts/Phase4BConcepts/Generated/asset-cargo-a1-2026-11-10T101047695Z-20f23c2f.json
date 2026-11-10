@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-10T10:10:47.698Z",
+  "mode": "text-to-image",
+  "endpoint": "http://127.0.0.1:7860",
+  "prompt": "Single isolated compact industrial cargo crate, centered and fully visible. A small rectangular red-painted metal package with sturdy beveled corners, subtle brushed-steel edge bands, a large blank neutral ivory identification plate centered on its front face, no markings on the plate. Premium tactile tabletop factory-game prop, clean stylized 3D product render, painted metal and brushed steel, soft studio key light from upper left, subtle contact shadow, crisp readable silhouette. Fixed three-quarter view from slightly above, same camera and object scale as a miniature factory component render. Plain matte pale warm-gray background, strong object/background separation. No scene, no conveyor, no extra objects, no symbols, no text, no labels, no logos, no watermark.",
+  "negativePrompt": "photorealistic, complex factory scene, multiple crates, blue crate, symbol, writing, text, letters, logo, watermark, cropped object, perspective distortion, clutter, excessive neon, harsh shadows, blurry, low detail",
+  "parameters": {
+    "width": 768,
+    "height": 768,
+    "steps": 30,
+    "cfgScale": 6.5,
+    "seed": 4102103
+  },
+  "outputFile": "asset-cargo-a1-2026-11-10T101047695Z-20f23c2f.png"
+}
