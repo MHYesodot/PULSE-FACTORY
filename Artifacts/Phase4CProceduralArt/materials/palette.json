@@ -1,0 +1,66 @@
+{
+  "units": "meters",
+  "palette": {
+    "factory_base": {
+      "hex": "#26343A",
+      "metallic": 0.62,
+      "roughness": 0.34
+    },
+    "painted_steel": {
+      "hex": "#B54B3D",
+      "metallic": 0.42,
+      "roughness": 0.3
+    },
+    "painted_steel_dark": {
+      "hex": "#71372F",
+      "metallic": 0.45,
+      "roughness": 0.34
+    },
+    "brushed_metal": {
+      "hex": "#A7B3B2",
+      "metallic": 0.8,
+      "roughness": 0.27
+    },
+    "dark_rubber": {
+      "hex": "#20292B",
+      "metallic": 0.04,
+      "roughness": 0.72
+    },
+    "warm_brass": {
+      "hex": "#C49554",
+      "metallic": 0.72,
+      "roughness": 0.29
+    },
+    "active_mint": {
+      "hex": "#68D8B4",
+      "metallic": 0.12,
+      "roughness": 0.32,
+      "emission_strength": 0.25
+    },
+    "cargo_red": {
+      "hex": "#C7483E",
+      "metallic": 0.18,
+      "roughness": 0.38
+    },
+    "cargo_blue": {
+      "hex": "#427EA0",
+      "metallic": 0.18,
+      "roughness": 0.38
+    },
+    "cargo_identifier": {
+      "hex": "#E7DAB9",
+      "metallic": 0.08,
+      "roughness": 0.48
+    },
+    "board_ground": {
+      "hex": "#182529",
+      "metallic": 0.24,
+      "roughness": 0.47
+    },
+    "background": {
+      "hex": "#182226",
+      "metallic": 0.0,
+      "roughness": 0.8
+    }
+  }
+}

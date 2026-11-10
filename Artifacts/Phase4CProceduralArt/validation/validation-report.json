@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "checks": [
+    "Level 2 source and catalog state",
+    "Fixed-size conveyor modules cover each authoritative edge",
+    "Conveyor prototype dimensions",
+    "Separate diverter arms and animated pivots",
+    "Group badge, neutral cargo plate, and wheel-free cargo",
+    "Generated mesh geometry contains vertices and faces",
+    "Visible red/blue package identity at input-side approach positions",
+    "glTF 2.0 export containers, required nodes, and Blender round-trip imports",
+    "FBX exports preserve geometry, materials, dimensions, and diverter pivot hierarchy",
+    "Asset manifest provenance and export checksums",
+    "Portrait board render dimensions",
+    "Genuine RGBA transparency with transparent and opaque pixels",
+    "Diverter state stills and rendered animation proof"
+  ],
+  "checkCount": 13,
+  "alphaMinMax": {
+    "asset_conveyor_rgba.png": [
+      0.0,
+      1.0
+    ],
+    "asset_diverter_rgba.png": [
+      0.0,
+      1.0
+    ],
+    "asset_cargo_red_rgba.png": [
+      0.0,
+      1.0
+    ],
+    "asset_cargo_blue_rgba.png": [
+      0.0,
+      1.0
+    ]
+  },
+  "stateDifferencePixels": 10995,
+  "animationFile": "rendered/diverter_transition.mp4",
+  "validationSeconds": 1.208,
+  "blenderVersion": "5.2.4 LTS"
+}

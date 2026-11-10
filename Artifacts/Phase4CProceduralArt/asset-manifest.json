@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "createdBy": "Pulse Factory procedural Python source using Blender bpy",
+    "sourceFiles": [
+      "src/build_scene.py",
+      "materials/palette.json"
+    ],
+    "thirdPartyGeometryOrTextures": [],
+    "projectLicense": "No separate asset license is defined in the repository."
+  },
+  "coordinateSystem": {
+    "units": "meters",
+    "boardPlane": "XY",
+    "upAxis": "Z"
+  },
+  "assets": [
+    {
+      "id": "conveyor-module",
+      "source": "src/build_scene.py",
+      "export": "exports/conveyor_module.glb",
+      "unityCandidateExport": "exports/conveyor_module.fbx",
+      "dimensionsMeters": {
+        "length": 0.75,
+        "beltWidth": 0.48
+      },
+      "modular": true
+    },
+    {
+      "id": "diverter-module",
+      "source": "src/build_scene.py",
+      "export": "exports/diverter_module.glb",
+      "unityCandidateExport": "exports/diverter_module.fbx",
+      "pivot": "ASSET_DIVERTER_ArmPivot",
+      "animatedPart": "ASSET_DIVERTER_RoutingArm",
+      "group": "A",
+      "states": [
+        "logical false route",
+        "logical true route"
+      ]
+    },
+    {
+      "id": "cargo-crate-red",
+      "source": "src/build_scene.py",
+      "export": "exports/cargo_red.glb",
+      "unityCandidateExport": "exports/cargo_red.fbx",
+      "dimensionsMeters": {
+        "width": 0.48,
+        "depth": 0.42,
+        "height": 0.42
+      },
+      "identityPlate": "neutral; Unity supplies package symbol",
+      "materialVariant": "cargo_red"
+    },
+    {
+      "id": "cargo-crate-blue",
+      "source": "src/build_scene.py",
+      "export": "exports/cargo_blue.glb",
+      "unityCandidateExport": "exports/cargo_blue.fbx",
+      "dimensionsMeters": {
+        "width": 0.48,
+        "depth": 0.42,
+        "height": 0.42
+      },
+      "identityPlate": "neutral; Unity supplies package symbol",
+      "materialVariant": "cargo_blue"
+    }
+  ],
+  "exports": {
+    "exports/cargo_blue.fbx": "de9fa94759ad1b95da08559fec922f0232ee3587ee4cb9346d1c7d39f1cb38bf",
+    "exports/cargo_blue.glb": "74c035ccf01020ddea01c9c71bdce437194062bcb5f57f2e90add3622ec998b7",
+    "exports/cargo_red.fbx": "f86beb35a3199345e77cd03487d012d69cf8af33b269df75a714112999ef4bb6",
+    "exports/cargo_red.glb": "74c245bf2802eab37189024827e1c76157674ee2dd32cd5dffe71e545ebc51c4",
+    "exports/conveyor_module.fbx": "570aa661267fb54cace3327415d6a27c2dd3ae2d0267a7a9995b70392ce8756d",
+    "exports/conveyor_module.glb": "3060f2244454b782f12b473e746e625170d48456279e8e8bfb0b4dbb9708a14d",
+    "exports/diverter_module.fbx": "01d56c19b19a3b19c5b1003851ba851276131a73bb8ad9d44526258b2aac6b16",
+    "exports/diverter_module.glb": "5a66849c2dfbba6e766f19dcb47fb18d213e7cb540c1e47ebccc60541afab56d"
+  },
+  "scene": "generated/models/PulseFactory_Phase4C.blend",
+  "boardPreview": "rendered/level2_shared_control.png"
+}

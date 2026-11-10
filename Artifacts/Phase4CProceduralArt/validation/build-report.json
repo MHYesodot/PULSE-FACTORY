@@ -1,0 +1,150 @@
+{
+  "levelId": "shared-control",
+  "sourceLevelFile": "Assets/Resources/Levels/shared-control.json",
+  "firstCatalogCommand": "PulseA",
+  "switchesAfterFirstCommand": {
+    "a": true,
+    "b": false
+  },
+  "selectedRoutesAfterFirstCommand": {
+    "J1": "R",
+    "J2": "B"
+  },
+  "packagesAfterFirstCommand": [
+    {
+      "id": "red-1",
+      "kind": "red",
+      "node": "J1",
+      "visualOffsetFromNodeMeters": 0.9
+    },
+    {
+      "id": "blue-1",
+      "kind": "blue",
+      "node": "J2",
+      "visualOffsetFromNodeMeters": 0.9
+    }
+  ],
+  "moduleLengthMeters": 0.75,
+  "packageVisualOffsetFromNodeMeters": 0.9,
+  "moduleCountsByEdge": {
+    "S1J1": 3,
+    "S2J2": 3,
+    "J1R": 3,
+    "J1B": 4,
+    "J2R": 4,
+    "J2B": 3
+  },
+  "bridgeEdge": "J1B",
+  "bridgeLiftMeters": 0.58,
+  "boardRender": {
+    "file": "rendered/level2_shared_control.png",
+    "dimensions": [
+      1200,
+      1800
+    ],
+    "renderSeconds": 16.835
+  },
+  "isolatedAssetRenders": {
+    "conveyor": {
+      "file": "rendered/asset_conveyor_rgba.png",
+      "dimensions": [
+        768,
+        768
+      ],
+      "channels": 4,
+      "alphaMinMax": [
+        0.0,
+        1.0
+      ],
+      "renderSeconds": 2.406
+    },
+    "diverter": {
+      "file": "rendered/asset_diverter_rgba.png",
+      "dimensions": [
+        768,
+        768
+      ],
+      "channels": 4,
+      "alphaMinMax": [
+        0.0,
+        1.0
+      ],
+      "renderSeconds": 2.605
+    },
+    "cargo_red": {
+      "file": "rendered/asset_cargo_red_rgba.png",
+      "dimensions": [
+        768,
+        768
+      ],
+      "channels": 4,
+      "alphaMinMax": [
+        0.0,
+        1.0
+      ],
+      "renderSeconds": 1.835
+    },
+    "cargo_blue": {
+      "file": "rendered/asset_cargo_blue_rgba.png",
+      "dimensions": [
+        768,
+        768
+      ],
+      "channels": 4,
+      "alphaMinMax": [
+        0.0,
+        1.0
+      ],
+      "renderSeconds": 1.828
+    }
+  },
+  "animationRenderSeconds": 56.586,
+  "animationFrames": [
+    1,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19,
+    21,
+    23,
+    25,
+    27,
+    29,
+    31,
+    33,
+    35,
+    37,
+    39,
+    41,
+    43,
+    45,
+    47,
+    48
+  ],
+  "animationFps": 12,
+  "animationFrameDirectory": "rendered/animation_frames/",
+  "animationFile": "rendered/diverter_transition.mp4 (encoded by build.sh via macOS AVFoundation)",
+  "exportFiles": [
+    "exports/conveyor_module.glb",
+    "exports/diverter_module.glb",
+    "exports/cargo_red.glb",
+    "exports/cargo_blue.glb"
+  ],
+  "unityCandidateExportFiles": [
+    "exports/conveyor_module.fbx",
+    "exports/diverter_module.fbx",
+    "exports/cargo_red.fbx",
+    "exports/cargo_blue.fbx"
+  ],
+  "assetManifest": "asset-manifest.json",
+  "blendFile": "generated/models/PulseFactory_Phase4C.blend",
+  "wallClockBuildSeconds": 88.765,
+  "peakResidentMemoryBytes": 2268463104,
+  "validation": "geometry and export checks are completed by validate_build.py",
+  "unityIntegration": false
+}
