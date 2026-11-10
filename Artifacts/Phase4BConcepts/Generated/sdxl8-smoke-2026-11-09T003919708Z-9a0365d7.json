@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-09T00:39:19.714Z",
+  "mode": "text-to-image",
+  "endpoint": "http://127.0.0.1:7860",
+  "prompt": "A single compact premium stylized 2D mobile puzzle-game factory machine, one red crate marked with a clear white plus on a short dark conveyor, brushed steel and charcoal materials with subtle mint accents, neutral studio background, soft upper-left light, clean readable silhouettes, polished original game concept art, no text, no logo, no watermark.",
+  "negativePrompt": "letters, words, logo, watermark, extra packages, clutter, blurry, low detail",
+  "parameters": {
+    "width": 512,
+    "height": 512,
+    "steps": 8,
+    "cfgScale": 7,
+    "seed": 42017
+  },
+  "outputFile": "sdxl8-smoke-2026-11-09T003919708Z-9a0365d7.png"
+}

@@ -1,0 +1,159 @@
+{
+  "packageId": "pulse-factory-phase4b-concepts",
+  "status": "local-generation-verified-concepts-not-approved",
+  "generatedAssets": [
+    {
+      "assetId": "sdxl8-smoke-2026-11-09T003919708Z-9a0365d7",
+      "role": "smoke-test",
+      "file": "Generated/sdxl8-smoke-2026-11-09T003919708Z-9a0365d7.png",
+      "metadataFile": "Generated/sdxl8-smoke-2026-11-09T003919708Z-9a0365d7.json",
+      "width": 512,
+      "height": 512,
+      "sha256": "81c1e88d0aaaab569f43a30b669c92844e196ca24c0ee2fbbf15277aebc36a52",
+      "reviewStatus": "generated; requested red-plus crate is not clearly depicted"
+    },
+    {
+      "assetId": "concept-a-miniature-2026-11-09T004329775Z-e6085f30",
+      "role": "A-miniature-factory-full-portrait-gameplay",
+      "file": "Generated/concept-a-miniature-2026-11-09T004329775Z-e6085f30.png",
+      "metadataFile": "Generated/concept-a-miniature-2026-11-09T004329775Z-e6085f30.json",
+      "width": 576,
+      "height": 1024,
+      "sha256": "c99464a2569ba7fb2da7c31cae2040b04f44fb7810179e196864b3cfbe161aff",
+      "reviewStatus": "generated; poor topology, package-state, and UI compliance; not approved"
+    },
+    {
+      "assetId": "concept-b-future-tech-2026-11-09T004527842Z-19fc3c35",
+      "role": "B-future-tech-full-portrait-gameplay",
+      "file": "Generated/concept-b-future-tech-2026-11-09T004527842Z-19fc3c35.png",
+      "metadataFile": "Generated/concept-b-future-tech-2026-11-09T004527842Z-19fc3c35.json",
+      "width": 576,
+      "height": 1024,
+      "sha256": "2caccd7df4239f361f286933e827c1a9f27c85a371b6ddfc2e80a0147486cdc1",
+      "reviewStatus": "generated; poor topology, package-state, and UI compliance; not approved"
+    },
+    {
+      "assetId": "concept-c-toy-factory-2026-11-09T004645123Z-9aedd0b8",
+      "role": "C-toy-factory-full-portrait-gameplay",
+      "file": "Generated/concept-c-toy-factory-2026-11-09T004645123Z-9aedd0b8.png",
+      "metadataFile": "Generated/concept-c-toy-factory-2026-11-09T004645123Z-9aedd0b8.json",
+      "width": 576,
+      "height": 1024,
+      "sha256": "d61fba62a922a77da08c52de8dcfc884040763d620d0b94b37b283382a035eee",
+      "reviewStatus": "generated; poor topology, package-state, and UI compliance; not approved"
+    }
+  ],
+  "generationToolDiscovery": {
+    "imageGenerationToolExposed": false,
+    "imageEditingToolExposed": false,
+    "animationGenerationToolExposed": false,
+    "ollamaClientVersion": "0.35.0",
+    "ollamaLocalModelManifestCount": 0,
+    "ollamaServiceRunning": false,
+    "commonLocalGeneratorsFound": [
+      "Draw Things 26.1020.0 (installed; API listening on 127.0.0.1:7860)"
+    ],
+    "recognizedProviderCredentialVariableNamesFound": [],
+    "externalUploadsPerformed": false,
+    "generationChargesIncurred": 0
+  },
+  "localIntegration": {
+    "drawThingsAppVersion": "26.1020.0",
+    "appStoreSignatureVerified": true,
+    "localMcpAdapter": "Tools/Phase4BImageMcp/",
+    "officialMcpSdkVersion": "1.32.2",
+    "mcpHandshakeVerified": true,
+    "copilotGlobalConfigWritten": true,
+    "mcpServerLoadedInCurrentSession": false,
+    "drawThingsApiRunning": true,
+    "drawThingsApiLoopbackOnly": true,
+    "adapterStatusConnected": true,
+    "modelDownloaded": true,
+    "modelFile": "~/Library/Application Support/Pulse Factory/Models/sd_xl_base_1.0.safetensors",
+    "modelFileBytes": 6938078334,
+    "modelFileSha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b",
+    "loadedModelName": "sd_xl_base_1.0_q8p.ckpt",
+    "modelImportedToDrawThings": true,
+    "modelConvertedTo8Bit": true,
+    "generationPerformed": true,
+    "generationClientTimeoutMs": 600000,
+    "defaultClientTimeoutAttempt": "timed out at 60000 ms without an output; retry succeeded with the explicit timeout"
+  },
+  "reference": {
+    "levelId": "shared-control",
+    "levelData": "../../Assets/Resources/Levels/shared-control.json",
+    "catalog": "../../Assets/Resources/Levels/catalog.json",
+    "phase4aScreenshot": "../Phase4AScreenshots/05-gameplay-level-two.png",
+    "uploadedToExternalService": false
+  },
+  "concepts": [
+    {
+      "conceptId": "A-miniature-factory",
+      "reviewStatus": "generated-needs-revision; poor prompt compliance; not approved",
+      "sourceModel": "sd_xl_base_1.0_q8p.ckpt",
+      "providerParameters": {
+        "width": 576,
+        "height": 1024,
+        "steps": 20,
+        "cfgScale": 7.5,
+        "seed": 114522
+      },
+      "requestedViews": [
+        "full-portrait-gameplay",
+        "machinery-close-up",
+        "package-and-diverter-close-up",
+        "synchronized-pulse-before-after"
+      ],
+      "outputs": [
+        "Generated/concept-a-miniature-2026-11-09T004329775Z-e6085f30.png"
+      ],
+      "commercialRightsReview": "not-assessed; not approved for production"
+    },
+    {
+      "conceptId": "B-future-tech",
+      "reviewStatus": "generated-needs-revision; poor prompt compliance; not approved",
+      "sourceModel": "sd_xl_base_1.0_q8p.ckpt",
+      "providerParameters": {
+        "width": 576,
+        "height": 1024,
+        "steps": 20,
+        "cfgScale": 7.5,
+        "seed": 114522
+      },
+      "requestedViews": [
+        "full-portrait-gameplay",
+        "machinery-close-up",
+        "package-and-diverter-close-up",
+        "synchronized-pulse-before-after"
+      ],
+      "outputs": [
+        "Generated/concept-b-future-tech-2026-11-09T004527842Z-19fc3c35.png"
+      ],
+      "commercialRightsReview": "not-assessed; not approved for production"
+    },
+    {
+      "conceptId": "C-toy-factory",
+      "reviewStatus": "generated-needs-revision; poor prompt compliance; not approved",
+      "sourceModel": "sd_xl_base_1.0_q8p.ckpt",
+      "providerParameters": {
+        "width": 576,
+        "height": 1024,
+        "steps": 20,
+        "cfgScale": 7.5,
+        "seed": 114522
+      },
+      "requestedViews": [
+        "full-portrait-gameplay",
+        "machinery-close-up",
+        "package-and-diverter-close-up",
+        "synchronized-pulse-before-after"
+      ],
+      "outputs": [
+        "Generated/concept-c-toy-factory-2026-11-09T004645123Z-9aedd0b8.png"
+      ],
+      "commercialRightsReview": "not-assessed; not approved for production"
+    }
+  ],
+  "generationReview": "All three matched portrait attempts are valid PNGs but fail to communicate the specified board topology, package state, and HUD; the style directions are also not sufficiently distinct. No concept is approved. Only Shot 1 was generated for each direction; nine proposed views remain.",
+  "nextRequiredAction": "Revise the prompt/composition strategy or evaluate a different local model, then obtain human approval before generating more views or integrating artwork. No screenshot reference is authorized."
+}
