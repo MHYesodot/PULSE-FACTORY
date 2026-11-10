@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "derivedFrom": "Artifacts/Phase4CProceduralArt/generated/models/PulseFactory_Phase4C.blend",
+  "sourceBuilder": "Artifacts/Phase4CProceduralArt/src/build_scene.py",
+  "refinementSource": "src/refine_board.py",
+  "levelSourceSha256": "7faf498bd633f0112314d7df614901d89e14958c6c674c05a0b5da32d295f07f",
+  "provenance": "Original procedural geometry refined in Blender Python; no third-party models or textures.",
+  "coordinateSystem": {
+    "units": "meters",
+    "boardPlane": "XY",
+    "upAxis": "Z"
+  },
+  "exports": {
+    "exports/cargo_blue.fbx": "9dde058addaca7cfc1bba7f9f8dc80c2cc656abd3f91305c7fb5182ac7d39540",
+    "exports/cargo_blue.glb": "74c035ccf01020ddea01c9c71bdce437194062bcb5f57f2e90add3622ec998b7",
+    "exports/cargo_red.fbx": "337ebd2d8bf7c868dea6f10ce61e8a175b8ceb8f4f901984d951b972c4d01eb2",
+    "exports/cargo_red.glb": "74c245bf2802eab37189024827e1c76157674ee2dd32cd5dffe71e545ebc51c4",
+    "exports/conveyor_module.fbx": "a4c153f552390dffbd009dd7a59210d496ff217e4d7790c46c924480e2abf538",
+    "exports/conveyor_module.glb": "76239fbf0179d0889204172892fe0dc0216b0f778430991c6762a1f713ce7a57",
+    "exports/diverter_module.fbx": "29c5c67d6c62d27e35c8053d62f0540ca25c36c1289ea1b62ef00070e34828a1",
+    "exports/diverter_module.glb": "aa2b9559d040ebba1f008fa3b7a41f962b93587439256ce2916e622449fd10ac"
+  }
+}

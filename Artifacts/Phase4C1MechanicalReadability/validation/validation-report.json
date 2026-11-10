@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "checks": [
+    "Unmodified Level 2 source and graph-derived switch routes",
+    "All six authoritative connections have complete modules and active/inactive indicators",
+    "Package meshes coincide with their logical nodes and use independent symbols",
+    "Both diverters, route indicators, and pulse effects transition synchronously",
+    "Three 9:16 comparisons and 1080x1920 / 360x640 mobile previews",
+    "Synchronized pulse animation frames and encoded H.264 proof",
+    "Refined GLB and FBX exports round-trip with the diverter pivot hierarchy",
+    "Refined asset manifest checksums"
+  ],
+  "checkCount": 8,
+  "levelGraphSha256": "7faf498bd633f0112314d7df614901d89e14958c6c674c05a0b5da32d295f07f",
+  "comparisonRenderDimensions": [
+    1080,
+    1920
+  ],
+  "mobilePreviewDimensions": [
+    360,
+    640
+  ],
+  "validatedExportCount": 8,
+  "animationFrameCount": 18,
+  "validationSeconds": 10.752,
+  "blenderVersion": "5.2.4 LTS"
+}

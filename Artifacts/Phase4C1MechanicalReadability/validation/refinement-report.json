@@ -1,0 +1,133 @@
+{
+  "environment": {
+    "blenderVersion": "5.2.4 LTS",
+    "macOS": "27.0.1",
+    "architecture": "arm64",
+    "memoryBytes": 17179869184
+  },
+  "levelId": "shared-control",
+  "levelSource": "Assets/Resources/Levels/shared-control.json",
+  "levelSourceSha256": "7faf498bd633f0112314d7df614901d89e14958c6c674c05a0b5da32d295f07f",
+  "catalogCommand": "PulseA",
+  "switchesBeforePulse": {
+    "a": false,
+    "b": false
+  },
+  "switchesAfterPulse": {
+    "a": true,
+    "b": false
+  },
+  "routesBeforePulse": {
+    "J1": "B",
+    "J2": "R"
+  },
+  "routesAfterPulse": {
+    "J1": "R",
+    "J2": "B"
+  },
+  "edgeStatus": {
+    "S1J1": {
+      "initial": true,
+      "afterPulse": true
+    },
+    "S2J2": {
+      "initial": true,
+      "afterPulse": true
+    },
+    "J1R": {
+      "initial": false,
+      "afterPulse": true
+    },
+    "J1B": {
+      "initial": true,
+      "afterPulse": false
+    },
+    "J2R": {
+      "initial": true,
+      "afterPulse": false
+    },
+    "J2B": {
+      "initial": false,
+      "afterPulse": true
+    }
+  },
+  "edgeModuleCounts": {
+    "S1J1": 3,
+    "S2J2": 3,
+    "J1R": 3,
+    "J1B": 4,
+    "J2R": 4,
+    "J2B": 3
+  },
+  "packageVisuals": {
+    "red-1": {
+      "kind": "red",
+      "logicalNode": "J1",
+      "visualCenter": [
+        -0.992,
+        0.0
+      ],
+      "meshScale": 0.72
+    },
+    "blue-1": {
+      "kind": "blue",
+      "logicalNode": "J2",
+      "visualCenter": [
+        0.992,
+        0.0
+      ],
+      "meshScale": 0.72
+    }
+  },
+  "boardDimensions": [
+    1080,
+    1920
+  ],
+  "comparisonRenders": {
+    "A_baseline_camera": "rendered/comparison_A_baseline.png",
+    "B_near_top_down": "rendered/comparison_B_near_top_down.png",
+    "C_refined_three_quarter": "rendered/comparison_C_refined_three_quarter.png"
+  },
+  "comparisonBasis": "Same refined scene, materials, switch/package state, and graph; only camera differs.",
+  "recommendedCamera": "B_near_top_down",
+  "mobilePreview": "rendered/mobile_preview_1080x1920.png",
+  "animation": {
+    "frames": [
+      1,
+      3,
+      5,
+      7,
+      9,
+      11,
+      13,
+      15,
+      17,
+      19,
+      21,
+      23,
+      25,
+      27,
+      29,
+      31,
+      33,
+      35
+    ],
+    "fps": 12,
+    "durationSeconds": 1.5,
+    "frameDimensions": [
+      640,
+      1138
+    ],
+    "renderSeconds": 108.68,
+    "file": "rendered/synchronized_pulse_transition.mp4"
+  },
+  "renderSeconds": {
+    "A_baseline_camera": 55.836,
+    "B_near_top_down": 45.382,
+    "C_refined_three_quarter": 32.23
+  },
+  "buildWallSeconds": 249.132,
+  "peakResidentMemoryBytes": 1419821056,
+  "sourceBlendPreserved": true,
+  "unityIntegration": false
+}
